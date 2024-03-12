@@ -1,0 +1,30 @@
+{
+    "dataset": "qm9_property",
+    "model": "graphspn_naive",
+    "model_hyperpars": {
+        "nd_nodes": 9,
+        "nd_edges": 81,
+        "nk_nodes": 5,
+        "nk_edges": 4,
+        "nl_nodes": 3,
+        "nl_edges": 3,
+        "nr_nodes": 1,
+        "nr_edges": 1,
+        "ns_nodes": 5,
+        "ns_edges": 5,
+        "ni_nodes": 5,
+        "ni_edges": 5,
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": 0.02,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": 10,
+    "batch_size": 100,
+    "seed": 0
+}

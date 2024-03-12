@@ -105,10 +105,6 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
     return data_list
 
 
-def collate_fn(batch):
-    return batch
-
-
 if __name__ == '__main__':
     # download_qm9()
     dataset = torch.load("qm9_property.pt")
