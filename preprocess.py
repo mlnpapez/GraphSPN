@@ -66,13 +66,13 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
             tensor_size = num_max_atom if fixed_size else num_atom
 
             if ohe == True:
-                atom_tensor = torch.zeros(tensor_size, len(atom_list), dtype=torch.float32)
+                atom_tensor = torch.zeros(tensor_size, len(atom_list), dtype=torch.int8)
                 for atom_idx, atom in enumerate(mol.GetAtoms()):
                     atom_type = atom.GetAtomicNum()
                     atom_tensor[atom_idx, atom_list.index(atom_type)] = 1
                 atom_tensor[~torch.sum(atom_tensor, 1, dtype=torch.bool), 3] = 1
 
-                bond_tensor = torch.zeros(4, tensor_size, tensor_size, dtype=torch.float32)
+                bond_tensor = torch.zeros(4, tensor_size, tensor_size, dtype=torch.int8)
                 for bond in mol.GetBonds():
                     bond_type = bond.GetBondType()
                     c = bond_type_to_int[bond_type]
@@ -82,25 +82,25 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                     bond_tensor[c, j, i] = 1.0
                 bond_tensor[3, ~torch.sum(bond_tensor, 0, dtype=torch.bool)] = 1
             else:
-                atom_tensor = torch.zeros(tensor_size, dtype=torch.float32)
+                atom_tensor = torch.zeros(tensor_size, dtype=torch.int8)
                 for atom_idx, atom in enumerate(mol.GetAtoms()):
                     atom_type = atom.GetAtomicNum()
-                    atom_tensor[atom_idx] = atom_list.index(atom_type) + 1.
-                atom_tensor[atom_tensor==0.] = len(atom_list) + 1.
+                    atom_tensor[atom_idx] = atom_list.index(atom_type) + 1
+                atom_tensor[atom_tensor==0] = len(atom_list) + 1
 
-                bond_tensor = torch.zeros(tensor_size, tensor_size, dtype=torch.float32)
+                bond_tensor = torch.zeros(tensor_size, tensor_size, dtype=torch.int8)
                 for bond in mol.GetBonds():
                     bond_type = bond.GetBondType()
-                    c = bond_type_to_int[bond_type] + 1.
+                    c = bond_type_to_int[bond_type] + 1
                     i = bond.GetBeginAtomIdx()
                     j = bond.GetEndAtomIdx()
                     bond_tensor[i, j] = c
                     bond_tensor[j, i] = c
-                bond_tensor[bond_tensor==0.] = len(bond_type_to_int) + 1.
+                bond_tensor[bond_tensor==0] = len(bond_type_to_int) + 1
 
             if available_prop:
                 y = torch.tensor([float(prop_list[i])])
-            data_list.append(Molecule(atom_tensor, bond_tensor, num_atom, y))
+            data_list.append(Molecule(atom_tensor-1, bond_tensor-1, num_atom, y))
 
     return data_list
 
