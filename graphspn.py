@@ -2,10 +2,8 @@ import json
 import torch
 import torch.nn as nn
 
-from torch.utils.data import DataLoader
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
-from preprocess import MolecularDataset, Molecule
-
+from preprocess import MolecularDataset, load_qm9
 
 class GraphSPN(nn.Module):
     def __init__(
@@ -51,17 +49,19 @@ class GraphSPN(nn.Module):
         self.network_nodes.initialize()
         self.network_edges.initialize()
 
+        self.device = device
         self.to(device)
 
     def forward(self, x):
-        return self.network_nodes(x['x']) + self.network_edges(x['a'])
+        ll_nodes = self.network_nodes(x['x'].to(self.device))
+        ll_edges = self.network_edges(x['a'].view(-1, self.nd_edges).to(self.device))
+        return ll_nodes + ll_edges
 
     def logpdf(self, x):
         return self(x).mean()
 
 if __name__ == '__main__':
-    # dataset = torch.load("qm9_property.pt")
-    # dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
+    loader_trn, loader_val, loader_tst = load_qm9(10)
     name = 'graphspn'
 
     with open('config/' + f'{name}.json', 'r') as fp:
@@ -71,5 +71,5 @@ if __name__ == '__main__':
 
     print(model)
 
-    # for batch in dataloader:
-    #     print(batch)
+    for batch in loader_trn:
+        print(model(batch))

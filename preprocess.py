@@ -4,49 +4,33 @@ import urllib
 import pandas
 from rdkit import Chem
 from tqdm import tqdm
-from torch.utils.data import Dataset, DataLoader
 
 
 bond_type_to_int = {Chem.BondType.SINGLE: 0, Chem.BondType.DOUBLE: 1, Chem.BondType.TRIPLE: 2}
 
 
-class Molecule(object):
-    def __init__(self, x, a, n, y):
-        self.x = x
-        self.a = a
-        self.n = n
-        self.y = y
-
-
-class MolecularDataset(Dataset):
+class MolecularDataset(torch.utils.data.Dataset):
     def __init__(self, data):
         self.data = data
 
     def __getitem__(self, index):
-        x = self.data[index].x
-        a = self.data[index].a
-        n = self.data[index].n
-        y = self.data[index].y
-
-        return {'x': x, 'a': a, 'n': n, 'y': y}
+        return self.data[index]
 
     def __len__(self):
         return len(self.data)
 
+    def split(self, val_size, tst_size, seed=0):
+        generator = torch.Generator()
+        generator.manual_seed(seed)
+        all_size = len(self.data)
 
-def download_qm9():
-    file = "qm9_property.csv"
-    url = 'https://raw.githubusercontent.com/divelab/DIG_storage/main/ggraph/qm9_property.csv'
+        i_trn, i_val, i_tst = torch.split(torch.randperm(all_size, generator=generator), (all_size-val_size-tst_size, val_size, tst_size))
 
-    print("Downloading dataset.")
+        data_trn = MolecularDataset([self.data[i] for i in i_trn])
+        data_val = MolecularDataset([self.data[i] for i in i_val])
+        data_tst = MolecularDataset([self.data[i] for i in i_tst])
 
-    urllib.request.urlretrieve(url, file)
-    data_list = preprocess(file, 'smile', 'penalized_logp', True, 9, [6, 7, 8, 9], fixed_size=True)
-    torch.save(MolecularDataset(data_list), "qm9_property.pt")
-
-    os.remove(file)
-
-    print("Done.")
+        return data_trn, data_val, data_tst
 
 
 def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_list, fixed_size=True, ohe=False):
@@ -100,17 +84,48 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
 
             if available_prop:
                 y = torch.tensor([float(prop_list[i])])
-            data_list.append(Molecule(atom_tensor-1, bond_tensor-1, num_atom, y))
+            data_list.append({'x': atom_tensor-1, 'a': bond_tensor-1, 'n': num_atom, 'y': y})
 
     return data_list
 
 
+def loader_wrapper(x, batch_size, shuffle):
+    return torch.utils.data.DataLoader(x, batch_size=batch_size, num_workers=2, shuffle=shuffle, pin_memory=True)
+
+def download_qm9():
+    file = "qm9_property.csv"
+    url = 'https://raw.githubusercontent.com/divelab/DIG_storage/main/ggraph/qm9_property.csv'
+
+    print("Downloading dataset.")
+
+    urllib.request.urlretrieve(url, file)
+    data_list = preprocess(file, 'smile', 'penalized_logp', True, 9, [6, 7, 8, 9], fixed_size=True)
+    torch.save(MolecularDataset(data_list), "qm9_property.pt")
+
+    os.remove(file)
+
+    print("Done.")
+
+
+def load_qm9(batch_size, raw=False, seed=0, val_size=10000, tst_size=10000):
+    x = torch.load("qm9_property.pt")
+    x_trn, x_val, x_tst = x.split(val_size, tst_size, seed)
+
+    if raw == True:
+        return x_trn, x_val, x_tst
+    else:
+        loader_trn = loader_wrapper(x_trn, batch_size, True)
+        loader_val = loader_wrapper(x_val, batch_size, False)
+        loader_tst = loader_wrapper(x_tst, batch_size, False)
+
+        return loader_trn, loader_val, loader_tst
+
+
 if __name__ == '__main__':
     # download_qm9()
-    dataset = torch.load("qm9_property.pt")
-    dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
+    loader_trn, loader_val, loader_tst = load_qm9(100)
 
-    for i, x in enumerate(dataloader):
+    for i, x in enumerate(loader_trn):
         print(i)
         print(x['x'][0])
         print(x['a'][0])
