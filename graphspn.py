@@ -8,40 +8,40 @@ from preprocess import MolecularDataset, load_qm9
 class GraphSPN(nn.Module):
     def __init__(
         self,
-        nd_nodes,
-        nd_edges,
-        nk_nodes,
-        nk_edges,
-        nl_nodes,
-        nl_edges,
-        nr_nodes,
-        nr_edges,
-        ns_nodes,
-        ns_edges,
-        ni_nodes,
-        ni_edges,
+        nd_n,
+        nd_e,
+        nk_n,
+        nk_e,
+        nl_n,
+        nl_e,
+        nr_n,
+        nr_e,
+        ns_n,
+        ns_e,
+        ni_n,
+        ni_e,
         device='cuda'
     ):
         super().__init__()
-        self.nd_nodes = nd_nodes
-        self.nd_edges = nd_edges
+        self.nd_nodes = nd_n
+        self.nd_edges = nd_e
 
-        graph_nodes = Graph.random_binary_trees(nd_nodes, nl_nodes, nr_nodes)
-        graph_edges = Graph.random_binary_trees(nd_edges, nl_edges, nr_edges)
+        graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
+        graph_edges = Graph.random_binary_trees(nd_e, nl_e, nr_e)
 
         args_nodes = EinsumNetwork.Args(
-            num_var=nd_nodes,
-            num_input_distributions=ni_nodes,
-            num_sums=ns_nodes,
+            num_var=nd_n,
+            num_input_distributions=ni_n,
+            num_sums=ns_n,
             exponential_family=ExponentialFamilyArray.CategoricalArray,
-            exponential_family_args={'K': nk_nodes},
+            exponential_family_args={'K': nk_n},
             use_em=False)
         args_edges = EinsumNetwork.Args(
-            num_var=nd_edges,
-            num_input_distributions=ni_edges,
-            num_sums=ns_edges,
+            num_var=nd_e,
+            num_input_distributions=ni_e,
+            num_sums=ns_e,
             exponential_family=ExponentialFamilyArray.CategoricalArray,
-            exponential_family_args={'K': nk_edges},
+            exponential_family_args={'K': nk_e},
             use_em=False)
 
         self.network_nodes = EinsumNetwork.EinsumNetwork(graph_nodes, args_nodes)
