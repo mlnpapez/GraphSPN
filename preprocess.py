@@ -84,7 +84,7 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
 
             if available_prop:
                 y = torch.tensor([float(prop_list[i])])
-            data_list.append({'x': atom_tensor-1, 'a': bond_tensor-1, 'n': num_atom, 'y': y})
+            data_list.append({'x': atom_tensor-1, 'a': bond_tensor-1, 'n': num_atom, 'y': y, 's': Chem.MolToSmiles(mol)})
 
     return data_list
 
@@ -129,3 +129,9 @@ if __name__ == '__main__':
         print(i)
         print(x['x'][0])
         print(x['a'][0])
+        print(x['s'][0])
+
+    x_trn, x_val, x_tst = load_qm9(0, raw=True)
+
+    smiles = [x['s'] for x in x_trn]
+    print(smiles)
