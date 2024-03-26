@@ -2,11 +2,10 @@ import os
 import torch
 import urllib
 import pandas
+
 from rdkit import Chem
 from tqdm import tqdm
-
-
-bond_type_to_int = {Chem.BondType.SINGLE: 0, Chem.BondType.DOUBLE: 1, Chem.BondType.TRIPLE: 2}
+from utils import bond_encoder
 
 
 class MolecularDataset(torch.utils.data.Dataset):
@@ -59,7 +58,7 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                 bond_tensor = torch.zeros(4, tensor_size, tensor_size, dtype=torch.int8)
                 for bond in mol.GetBonds():
                     bond_type = bond.GetBondType()
-                    c = bond_type_to_int[bond_type]
+                    c = bond_encoder[bond_type]
                     i = bond.GetBeginAtomIdx()
                     j = bond.GetEndAtomIdx()
                     bond_tensor[c, i, j] = 1.0
@@ -75,12 +74,12 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                 bond_tensor = torch.zeros(tensor_size, tensor_size, dtype=torch.int8)
                 for bond in mol.GetBonds():
                     bond_type = bond.GetBondType()
-                    c = bond_type_to_int[bond_type] + 1
+                    c = bond_encoder[bond_type] + 1
                     i = bond.GetBeginAtomIdx()
                     j = bond.GetEndAtomIdx()
                     bond_tensor[i, j] = c
                     bond_tensor[j, i] = c
-                bond_tensor[bond_tensor==0] = len(bond_type_to_int) + 1
+                bond_tensor[bond_tensor==0] = len(bond_encoder) + 1
 
             if available_prop:
                 y = torch.tensor([float(prop_list[i])])
