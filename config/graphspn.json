@@ -8,23 +8,23 @@
         "nk_e": 4,
         "nl_n": 3,
         "nl_e": 3,
-        "nr_n": 1,
-        "nr_e": 1,
-        "ns_n": 5,
-        "ns_e": 5,
+        "nr_n": 10,
+        "nr_e": 10,
+        "ns_n": 10,
+        "ns_e": 10,
         "ni_n": 5,
         "ni_e": 5,
         "device": "cuda"
     },
     "optimizer": "adam",
     "optimizer_hyperpars": {
-        "lr": 0.02,
+        "lr": 0.05,
         "betas": [
             0.9,
             0.82
         ]
     },
-    "num_epochs": 10,
+    "num_epochs": 20,
     "batch_size": 100,
     "seed": 0
 }

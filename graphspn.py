@@ -1,9 +1,12 @@
-import json
 import torch
 import torch.nn as nn
 
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
 from preprocess import MolecularDataset, load_qm9
+from rdkit import Chem
+from rdkit.Chem.Draw import MolsToGridImage
+from utils import *
+
 
 class GraphSPN(nn.Module):
     def __init__(
@@ -20,7 +23,8 @@ class GraphSPN(nn.Module):
         ns_e,
         ni_n,
         ni_e,
-        device='cuda'
+        device='cuda',
+        atom_list = [6, 7, 8, 9]
     ):
         super().__init__()
         self.nd_nodes = nd_n
@@ -49,6 +53,8 @@ class GraphSPN(nn.Module):
         self.network_nodes.initialize()
         self.network_edges.initialize()
 
+        self.atom_list = atom_list
+
         self.device = device
         self.to(device)
 
@@ -60,16 +66,57 @@ class GraphSPN(nn.Module):
     def logpdf(self, x):
         return self(x).mean()
 
+    def sample(self, num_samples):
+        x = self.network_nodes.sample(num_samples).cpu()
+        a = self.network_edges.sample(num_samples).view(-1, self.nd_nodes, self.nd_nodes).cpu()
+
+        x = x.to(torch.int)
+        a = a.to(torch.int)
+
+        mols = []
+        smiles = []
+        for x, a in zip(x, a):
+            rw_mol = Chem.RWMol()
+
+            for i in range(self.nd_nodes):
+                if x[i].item() != 4:
+                    rw_mol.AddAtom(Chem.Atom(atom_decoder(self.atom_list)[x[i].item()]))
+
+            num_atoms = rw_mol.GetNumAtoms()
+
+            for i in range(num_atoms):
+                for j in range(num_atoms):
+                    if a[i, j].item() != 3 and i > j:
+                        rw_mol.AddBond(i, j, bond_decoder[a[i, j].item()])
+
+                        flag, valence = valency(rw_mol)
+                        if flag:
+                            continue
+                        else:
+                            assert len(valence) == 2
+                            k = valence[0]
+                            v = valence[1]
+                            atomic_number = rw_mol.GetAtomWithIdx(k).GetAtomicNum()
+                            if atomic_number in (7, 8, 16) and (v - VALENCY_LIST[atomic_number]) == 1:
+                                rw_mol.GetAtomWithIdx(k).SetFormalCharge(1)
+
+            # rw_mol = radical_electrons_to_hydrogens(rw_mol)
+
+            mols.append(rw_mol)
+            smiles.append(Chem.MolToSmiles(rw_mol))
+
+        return mols, smiles
+
+
 if __name__ == '__main__':
-    loader_trn, loader_val, loader_tst = load_qm9(10)
-    name = 'graphspn'
+    x_trn, _, _ = load_qm9(0, raw=True)
+    smiles_trn = [x['s'] for x in x_trn]
 
-    with open('config/' + f'{name}.json', 'r') as fp:
-        hyperpars = json.load(fp)
+    model = torch.load('results/training/model_checkpoint/graphspn_naive/dataset=qm9_property_model=graphspn_naive_nd_n=9_nd_e=81_nk_n=5_nk_e=4_nl_n=3_nl_e=3_nr_n=10_nr_e=10_ns_n=10_ns_e=10_ni_n=5_ni_e=5_device=cuda_optimizer=adam_lr=0.05_betas=[0.9, 0.82]_num_epochs=20_batch_size=100_seed=0.pt')
 
-    model = GraphSPN(**hyperpars['model_hyperpars'])
+    molecules_gen, smiles_gen = model.sample(1000)
 
-    print(model)
+    results = evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False)
 
-    for batch in loader_trn:
-        print(model(batch))
+    img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
+    img.save(f'sampling.png')
