@@ -1,5 +1,7 @@
+import os
 import re
 import copy
+import pandas as pd
 
 from rdkit import Chem
 from rdkit.Chem import Descriptors
@@ -89,3 +91,15 @@ def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, deb
     }
 
     return results
+
+
+def best_model(path):
+    files = os.listdir(path)
+    dfs = []
+    for f in files:
+        data = pd.read_csv(path + f)
+        data['file_path'] = f.replace('.csv', '.pt')
+        dfs.append(data)
+    df = pd.concat(dfs, ignore_index=True)
+    idx = df['nll_tst_approx'].idxmin()
+    return df.loc[idx]['file_path'], df.loc[idx]['nll_val_approx']
