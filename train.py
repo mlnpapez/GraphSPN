@@ -77,12 +77,12 @@ def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_d
 def evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_dir):
     model.eval()
 
-    nll_trn_approx = run_epoch(model, loader_trn)
+    # nll_trn_approx = run_epoch(model, loader_trn)
     nll_val_approx = run_epoch(model, loader_val)
     nll_tst_approx = run_epoch(model, loader_tst)
 
     metrics = {
-        'nll_trn_approx': nll_trn_approx,
+        # 'nll_trn_approx': nll_trn_approx,
         'nll_val_approx': nll_val_approx,
         'nll_tst_approx': nll_tst_approx
     }
@@ -101,7 +101,7 @@ def evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_di
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
 
-    name = 'graphspn_naive_a'
+    name = 'graphspn_naive_c'
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
