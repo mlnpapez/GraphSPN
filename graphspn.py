@@ -195,10 +195,60 @@ class GraphSPNNaiveC(nn.Module):
         return create_mols(x, a, self.atom_list)
 
 
+class GraphSPNNaiveD(nn.Module):
+    def __init__(
+        self, nd_n, nd_e, nk_n, nk_e, ns, ni, num_pieces, device='cuda', atom_list=[6, 7, 8, 9]
+    ):
+        super().__init__()
+        self.nd_nodes = nd_n
+        self.nd_edges = nd_e
+        self.nk_nodes = nk_n
+        self.nk_edges = nk_e
+
+        nd = nd_n + nd_e
+        nk = max(nk_n, nk_e)
+
+        graph = Graph.poon_domingos_structure(shape=[nd_n+1, nd_n], delta=[[(nd_n+1) / d, nd_n / d] for d in num_pieces])
+
+        args = EinsumNetwork.Args(
+            num_var=nd,
+            num_input_distributions=ni,
+            num_sums=ns,
+            exponential_family=ExponentialFamilyArray.CategoricalArray,
+            exponential_family_args={'K': nk},
+            use_em=False)
+
+        self.network = EinsumNetwork.EinsumNetwork(graph, args)
+        self.network.initialize()
+
+        self.atom_list = atom_list
+
+        self.device = device
+        self.to(device)
+
+    def forward(self, x):
+        z = torch.cat((x['x'].unsqueeze(1).to(self.device), x['a'].to(self.device)), dim=1)
+        z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
+        return self.network(z)
+
+    def logpdf(self, x):
+        return self(x).mean()
+
+    def sample(self, num_samples):
+        z = self.network.sample(num_samples).to(torch.int).cpu()
+
+        z = z.view(-1, self.nd_nodes+1, self.nd_nodes)
+        x = z[:, 0 , :]
+        a = z[:, 0:, :]
+
+        return create_mols(x, a, self.atom_list)
+
+
 MODELS = {
     'graphspn_naive_a': GraphSPNNaiveA,
     'graphspn_naive_b': GraphSPNNaiveB,
-    'graphspn_naive_c': GraphSPNNaiveC
+    'graphspn_naive_c': GraphSPNNaiveC,
+    'graphspn_naive_d': GraphSPNNaiveD
 }
 
 
@@ -206,7 +256,7 @@ if __name__ == '__main__':
     checkpoint_dir = 'results/training/model_checkpoint/'
     evaluation_dir = 'results/training/model_evaluation/'
 
-    name = 'graphspn_naive_c'
+    name = 'graphspn_naive_d'
 
     x_trn, _, _ = load_qm9(0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
