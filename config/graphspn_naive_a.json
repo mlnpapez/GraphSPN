@@ -6,12 +6,12 @@
         "nd_e": 81,
         "nk_n": 5,
         "nk_e": 4,
-        "nl_n": 3,
-        "nl_e": 3,
-        "nr_n": 10,
-        "nr_e": 10,
-        "ns_n": 10,
-        "ns_e": 10,
+        "nl_n": 1,
+        "nl_e": 1,
+        "nr_n": 1,
+        "nr_e": 1,
+        "ns_n": 100,
+        "ns_e": 100,
         "ni_n": 5,
         "ni_e": 5,
         "device": "cuda"
@@ -25,6 +25,6 @@
         ]
     },
     "num_epochs": 20,
-    "batch_size": 100,
+    "batch_size": 1000,
     "seed": 0
 }
