@@ -1,18 +1,14 @@
 {
     "dataset": "qm9_property",
-    "model": "graphspn_naive_c",
+    "model": "graphspn_naive_f",
     "model_hyperpars": {
         "nd_n": 9,
         "nk_n": 5,
         "nk_e": 4,
-        "nl_n": 1,
-        "nl_e": 1,
-        "nr_n": 1,
-        "nr_e": 1,
-        "ns_n": 100,
-        "ns_e": 100,
-        "ni_n": 400,
-        "ni_e": 400,
+        "nl": 2,
+        "nr": 80,
+        "ns": 40,
+        "ni": 40,
         "device": "cuda"
     },
     "optimizer": "adam",
