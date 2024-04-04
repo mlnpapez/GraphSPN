@@ -3,6 +3,7 @@ import json
 import torch
 import torch.optim as optim
 import pandas as pd
+import utils
 
 from graphspn import *
 from preprocess import MolecularDataset, load_qm9
@@ -101,7 +102,7 @@ def evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_di
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
 
-    name = 'graphspn_naive_f'
+    name = 'graphspn_naive_d'
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
@@ -120,3 +121,16 @@ if __name__ == '__main__':
     metrics = evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_dir)
 
     print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metrics.items()))
+
+
+
+
+    x_trn, _, _ = load_qm9(0, raw=True)
+    smiles_trn = [x['s'] for x in x_trn]
+
+    molecules_gen, smiles_gen = model.sample(1000)
+
+    results = utils.evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False)
+
+    img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
+    img.save(f'sampling.png')

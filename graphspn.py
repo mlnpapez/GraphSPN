@@ -5,6 +5,7 @@ import torch.nn as nn
 from abc import abstractmethod
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
 from preprocess import MolecularDataset, load_qm9
+from torch.distributions import Categorical
 from rdkit import Chem
 from rdkit.Chem.Draw import MolsToGridImage
 from utils import *
@@ -49,7 +50,7 @@ def create_mols(x, a, atom_list):
 
 class GraphSPNNaiveCore(nn.Module):
     def __init__(
-        self, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list
+        self, nc, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list
     ):
         super().__init__()
         self.nd_nodes = nd_n
@@ -59,6 +60,7 @@ class GraphSPNNaiveCore(nn.Module):
             num_var=nd_n,
             num_input_distributions=ni_n,
             num_sums=ns_n,
+            num_classes=nc,
             exponential_family=ExponentialFamilyArray.CategoricalArray,
             exponential_family_args={'K': nk_n},
             use_em=False)
@@ -66,6 +68,7 @@ class GraphSPNNaiveCore(nn.Module):
             num_var=nd_e,
             num_input_distributions=ni_e,
             num_sums=ns_e,
+            num_classes=nc,
             exponential_family=ExponentialFamilyArray.CategoricalArray,
             exponential_family_args={'K': nk_e},
             use_em=False)
@@ -100,7 +103,7 @@ class GraphSPNNaiveA(GraphSPNNaiveCore):
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
         graph_edges = Graph.random_binary_trees(nd_e, nl_e, nr_e)
 
-        super().__init__(nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
+        super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
 
     def forward(self, x):
         ll_nodes = self.network_nodes(x['x'].to(self.device))
@@ -127,7 +130,7 @@ class GraphSPNNaiveB(GraphSPNNaiveCore):
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
         graph_edges = Graph.poon_domingos_structure(shape=[nd_n, nd_n], delta=[[nd_n / d, nd_n / d] for d in num_pieces])
 
-        super().__init__(nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
+        super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
 
     def forward(self, x):
         ll_nodes = self.network_nodes(x['x'].to(self.device))
@@ -156,7 +159,7 @@ class GraphSPNNaiveC(GraphSPNNaiveCore):
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
         graph_edges = Graph.random_binary_trees(nd_e, nl_e, nr_e)
 
-        super().__init__(nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
+        super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
 
     def forward(self, x):
         a = x['a'].to(self.device)
@@ -185,7 +188,56 @@ class GraphSPNNaiveC(GraphSPNNaiveCore):
         return create_mols(x, a, self.atom_list)
 
 
-class GraphSPNNaiveD(nn.Module):
+class GraphSPNNaiveD(GraphSPNNaiveCore):
+    def __init__(
+        self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
+    ):
+        nd_e = nd_n * (nd_n - 1) // 2
+
+        graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
+        graph_edges = Graph.random_binary_trees(nd_e, nl_e, nr_e)
+
+        super().__init__(nc, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
+
+        self.weights = nn.Parameter(torch.log_softmax(torch.randn(1, nc, device=self.device), dim=1), requires_grad=True)
+
+    def forward(self, x):
+        a = x['a'].to(self.device)
+        m = torch.tril(torch.ones_like(a, dtype=torch.bool), diagonal=-1)
+        l = a[m].view(-1, self.nd_edges)
+
+        ll_nodes = self.network_nodes(x['x'].to(self.device))
+        ll_edges = self.network_edges(l)
+
+        return torch.logsumexp(ll_nodes + ll_edges + torch.log_softmax(self.weights, dim=1), dim=1)
+
+    def logpdf(self, x):
+        return self(x).mean()
+
+    def sample(self, num_samples):
+        # c = Categorical(logits=self.weights).sample((1, ))
+        # x = self.network_nodes.sample(num_samples, class_idx=c).cpu()
+        # l = self.network_edges.sample(num_samples, class_idx=c).cpu()
+
+        x = torch.zeros(num_samples, self.nd_nodes)
+        l = torch.zeros(num_samples, self.nd_edges)
+
+        cs = Categorical(logits=self.weights).sample((num_samples, ))
+        for i, c in enumerate(cs):
+            x[i, :] = self.network_nodes.sample(1, class_idx=c).cpu()
+            l[i, :] = self.network_edges.sample(1, class_idx=c).cpu()
+
+        x = x.to(torch.int)
+        l = l.to(torch.int)
+
+        m = torch.tril(torch.ones(num_samples, self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1)
+        a = torch.zeros(num_samples, self.nd_nodes, self.nd_nodes, dtype=torch.int)
+        a[m] = l.view(num_samples*self.nd_edges)
+
+        return create_mols(x, a, self.atom_list)
+
+
+class GraphSPNNaiveE(nn.Module):
     def __init__(
         self, nd_n, nd_e, nk_n, nk_e, ns, ni, nl, nr, device='cuda', atom_list=[6, 7, 8, 9]
     ):
@@ -234,7 +286,7 @@ class GraphSPNNaiveD(nn.Module):
         return create_mols(x, a, self.atom_list)
 
 
-class GraphSPNNaiveE(nn.Module):
+class GraphSPNNaiveF(nn.Module):
     def __init__(
         self, nd_n, nd_e, nk_n, nk_e, ns, ni, num_pieces, device='cuda', atom_list=[6, 7, 8, 9]
     ):
@@ -283,7 +335,7 @@ class GraphSPNNaiveE(nn.Module):
         return create_mols(x, a, self.atom_list)
 
 
-class GraphSPNNaiveF(nn.Module):
+class GraphSPNNaiveG(nn.Module):
     def __init__(
         self, nd_n, nk_n, nk_e, ns, ni, nl, nr, device='cuda', atom_list=[6, 7, 8, 9]
     ):
@@ -345,8 +397,9 @@ MODELS = {
     'graphspn_naive_b': GraphSPNNaiveB,
     'graphspn_naive_c': GraphSPNNaiveC,
     'graphspn_naive_d': GraphSPNNaiveD,
-    'graphspn_naive_d': GraphSPNNaiveE,
-    'graphspn_naive_f': GraphSPNNaiveF
+    'graphspn_naive_e': GraphSPNNaiveE,
+    'graphspn_naive_f': GraphSPNNaiveF,
+    'graphspn_naive_g': GraphSPNNaiveG
 }
 
 
@@ -354,7 +407,7 @@ if __name__ == '__main__':
     checkpoint_dir = 'results/training/model_checkpoint/'
     evaluation_dir = 'results/training/model_evaluation/'
 
-    name = 'graphspn_naive_f'
+    name = 'graphspn_naive_d'
 
     x_trn, _, _ = load_qm9(0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
