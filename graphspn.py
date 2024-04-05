@@ -244,8 +244,6 @@ class GraphSPNNaiveE(nn.Module):
         super().__init__()
         self.nd_nodes = nd_n
         self.nd_edges = nd_e
-        self.nk_nodes = nk_n
-        self.nk_edges = nk_e
 
         nd = nd_n + nd_e
         nk = max(nk_n, nk_e)
@@ -293,8 +291,6 @@ class GraphSPNNaiveF(nn.Module):
         super().__init__()
         self.nd_nodes = nd_n
         self.nd_edges = nd_e
-        self.nk_nodes = nk_n
-        self.nk_edges = nk_e
 
         nd = nd_n + nd_e
         nk = max(nk_n, nk_e)
@@ -344,8 +340,6 @@ class GraphSPNNaiveG(nn.Module):
 
         self.nd_nodes = nd_n
         self.nd_edges = nd_e
-        self.nk_nodes = nk_n
-        self.nk_edges = nk_e
 
         nd = nd_n + nd_e
         nk = max(nk_n, nk_e)
@@ -392,6 +386,102 @@ class GraphSPNNaiveG(nn.Module):
         return create_mols(x, a, self.atom_list)
 
 
+class GraphSPNNaiveH(nn.Module):
+    def __init__(
+        self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
+    ):
+        super().__init__()
+        nd_e = nd_n * (nd_n - 1) // 2
+
+        self.nc = nc
+
+        self.nd_nodes = nd_n
+        self.nd_edges = nd_e
+
+        self.network_nodes = nn.ParameterList([])
+        self.network_edges = nn.ParameterList([])
+
+        for _ in range(nc):
+            graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
+            graph_edges = Graph.random_binary_trees(nd_e, nl_e, nr_e)
+
+            args_nodes = EinsumNetwork.Args(
+                num_var=nd_n,
+                num_input_distributions=ni_n,
+                num_sums=ns_n,
+                exponential_family=ExponentialFamilyArray.CategoricalArray,
+                exponential_family_args={'K': nk_n},
+                use_em=False)
+            args_edges = EinsumNetwork.Args(
+                num_var=nd_e,
+                num_input_distributions=ni_e,
+                num_sums=ns_e,
+                exponential_family=ExponentialFamilyArray.CategoricalArray,
+                exponential_family_args={'K': nk_e},
+                use_em=False)
+
+            net_n = EinsumNetwork.EinsumNetwork(graph_nodes, args_nodes)
+            net_e = EinsumNetwork.EinsumNetwork(graph_edges, args_edges)
+            net_n.initialize()
+            net_e.initialize()
+            net_n.to(device)
+            net_e.to(device)
+
+            self.network_nodes.append(net_n)
+            self.network_edges.append(net_e)
+
+        self.weights = nn.Parameter(torch.log_softmax(torch.randn(1, nc, device=device), dim=1), requires_grad=True)
+
+        self.atom_list = atom_list
+
+        self.device = device
+        self.to(device)
+
+    def forward(self, x):
+        a = x['a'].to(self.device)
+        m = torch.tril(torch.ones_like(a, dtype=torch.bool), diagonal=-1)
+        l = a[m].view(-1, self.nd_edges)
+
+        z = x['x'].to(self.device)
+        batch_size = len(z)
+
+        # ll_nodes = torch.cat([net(z) for net in self.network_nodes], dim=1)
+        # ll_edges = torch.cat([net(l) for net in self.network_edges], dim=1)
+        ll_nodes = torch.zeros(batch_size, self.nc, device=self.device)
+        ll_edges = torch.zeros(batch_size, self.nc, device=self.device)
+        for c, net in enumerate(self.network_nodes):
+            ll_nodes[:, c] = net(z).squeeze()
+        for c, net in enumerate(self.network_edges):
+            ll_edges[:, c] = net(l).squeeze()
+
+        return torch.logsumexp(ll_nodes + ll_edges + torch.log_softmax(self.weights, dim=1), dim=1)
+
+    def logpdf(self, x):
+        return self(x).mean()
+
+    def sample(self, num_samples):
+        # c = Categorical(logits=self.weights).sample((1, ))
+        # x = self.network_nodes.sample(num_samples, class_idx=c).cpu()
+        # l = self.network_edges.sample(num_samples, class_idx=c).cpu()
+
+        x = torch.zeros(num_samples, self.nd_nodes)
+        l = torch.zeros(num_samples, self.nd_edges)
+
+        cs = Categorical(logits=self.weights).sample((num_samples, ))
+        for i, c in enumerate(cs):
+            x[i, :] = self.network_nodes[c].sample(1).cpu()
+            l[i, :] = self.network_edges[c].sample(1).cpu()
+
+        x = x.to(torch.int)
+        l = l.to(torch.int)
+
+        m = torch.tril(torch.ones(num_samples, self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1)
+        a = torch.zeros(num_samples, self.nd_nodes, self.nd_nodes, dtype=torch.int)
+        a[m] = l.view(num_samples*self.nd_edges)
+
+        return create_mols(x, a, self.atom_list)
+
+
 MODELS = {
     'graphspn_naive_a': GraphSPNNaiveA,
     'graphspn_naive_b': GraphSPNNaiveB,
@@ -399,7 +489,8 @@ MODELS = {
     'graphspn_naive_d': GraphSPNNaiveD,
     'graphspn_naive_e': GraphSPNNaiveE,
     'graphspn_naive_f': GraphSPNNaiveF,
-    'graphspn_naive_g': GraphSPNNaiveG
+    'graphspn_naive_g': GraphSPNNaiveG,
+    'graphspn_naive_h': GraphSPNNaiveH,
 }
 
 
@@ -407,7 +498,7 @@ if __name__ == '__main__':
     checkpoint_dir = 'results/training/model_checkpoint/'
     evaluation_dir = 'results/training/model_evaluation/'
 
-    name = 'graphspn_naive_d'
+    name = 'graphspn_naive_h'
 
     x_trn, _, _ = load_qm9(0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
