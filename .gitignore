@@ -5,4 +5,5 @@ einsum
 notes.txt
 sampling.png
 
-qm9_property.pt
+qm9_property_int.pt
+qm9_property_ohe.pt

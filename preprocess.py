@@ -33,7 +33,7 @@ class MolecularDataset(torch.utils.data.Dataset):
 
 
 def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_list, fixed_size=True, ohe=False):
-    input_df = pandas.read_csv(path, sep=',', dtype='str')
+    input_df = pandas.read_csv(f'{path}.csv', sep=',', dtype='str')
     smile_list = list(input_df[smile_col])
     if available_prop:
         prop_list = list(input_df[prop_name])
@@ -64,6 +64,7 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                     bond_tensor[c, i, j] = 1.0
                     bond_tensor[c, j, i] = 1.0
                 bond_tensor[3, ~torch.sum(bond_tensor, 0, dtype=torch.bool)] = 1
+
             else:
                 atom_tensor = torch.zeros(tensor_size, dtype=torch.int8)
                 for atom_idx, atom in enumerate(mol.GetAtoms()):
@@ -81,33 +82,42 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                     bond_tensor[j, i] = c
                 bond_tensor[bond_tensor==0] = len(bond_encoder) + 1
 
+                atom_tensor -= 1
+                bond_tensor -= 1
+
             if available_prop:
                 y = torch.tensor([float(prop_list[i])])
-            data_list.append({'x': atom_tensor-1, 'a': bond_tensor-1, 'n': num_atom, 'y': y, 's': Chem.MolToSmiles(mol)})
+                data_list.append({'x': atom_tensor, 'a': bond_tensor, 'n': num_atom, 'y': y, 's': Chem.MolToSmiles(mol)})
+            else:
+                data_list.append({'x': atom_tensor, 'a': bond_tensor, 'n': num_atom,         's': Chem.MolToSmiles(mol)})
 
-    return data_list
+    if ohe == True:
+        torch.save(MolecularDataset(data_list), f'{path}_ohe.pt')
+    else:
+        torch.save(MolecularDataset(data_list), f'{path}_int.pt')
 
 
 def loader_wrapper(x, batch_size, shuffle):
     return torch.utils.data.DataLoader(x, batch_size=batch_size, num_workers=2, shuffle=shuffle, pin_memory=True)
 
-def download_qm9():
-    file = "qm9_property.csv"
+def download_qm9(ohe=False):
+    file = 'qm9_property'
     url = 'https://raw.githubusercontent.com/divelab/DIG_storage/main/ggraph/qm9_property.csv'
 
-    print("Downloading dataset.")
+    print('Downloading and preprocessing dataset.')
 
-    urllib.request.urlretrieve(url, file)
-    data_list = preprocess(file, 'smile', 'penalized_logp', True, 9, [6, 7, 8, 9], fixed_size=True)
-    torch.save(MolecularDataset(data_list), "qm9_property.pt")
+    urllib.request.urlretrieve(url, f'{file}.csv')
+    preprocess(file, 'smile', 'penalized_logp', True, 9, [6, 7, 8, 9], fixed_size=True, ohe=ohe)
+    os.remove(f'{file}.csv')
 
-    os.remove(file)
-
-    print("Done.")
+    print('Done.')
 
 
-def load_qm9(batch_size, raw=False, seed=0, val_size=10000, tst_size=10000):
-    x = torch.load("qm9_property.pt")
+def load_qm9(batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=False):
+    if ohe == True:
+        x = torch.load('qm9_property_ohe.pt')
+    else:
+        x = torch.load('qm9_property_int.pt')
     x_trn, x_val, x_tst = x.split(val_size, tst_size, seed)
 
     if raw == True:
@@ -121,8 +131,9 @@ def load_qm9(batch_size, raw=False, seed=0, val_size=10000, tst_size=10000):
 
 
 if __name__ == '__main__':
-    # download_qm9()
-    loader_trn, loader_val, loader_tst = load_qm9(100)
+    ohe = False
+    download_qm9(ohe)
+    loader_trn, loader_val, loader_tst = load_qm9(100, ohe=ohe)
 
     for i, x in enumerate(loader_trn):
         print(i)
@@ -130,7 +141,7 @@ if __name__ == '__main__':
         print(x['a'][0])
         print(x['s'][0])
 
-    x_trn, x_val, x_tst = load_qm9(0, raw=True)
+    x_trn, x_val, x_tst = load_qm9(0, raw=True, ohe=ohe)
 
     smiles = [x['s'] for x in x_trn]
     print(smiles)
