@@ -102,7 +102,7 @@ def evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_di
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
 
-    name = 'graphspn_naive_h'
+    name = 'graphspn_naive_deq_a'
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
@@ -114,16 +114,16 @@ if __name__ == '__main__':
 
     model = MODELS[name](**hyperpars['model_hyperpars'])
 
-    # if 'deq' in name:
-    #     loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=True)
-    # else:
-    #     loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=False)
+    if 'deq' in name:
+        loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=True)
+    else:
+        loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=False)
 
-    # path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)
-    # model = torch.load(path)
-    # metrics = evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_dir)
+    path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)
+    model = torch.load(path)
+    metrics = evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_dir)
 
-    # print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metrics.items()))
+    print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metrics.items()))
 
 
 

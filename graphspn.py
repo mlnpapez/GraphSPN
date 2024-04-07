@@ -482,6 +482,85 @@ class GraphSPNNaiveH(nn.Module):
         return create_mols(x, a, self.atom_list)
 
 
+class GraphSPNNaiveDeqCore(nn.Module):
+    def __init__(
+        self, nc, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list
+    ):
+        super().__init__()
+        self.nd_nodes = nd_n
+        self.nd_edges = nd_e
+
+        args_nodes = EinsumNetwork.Args(
+            num_var=nd_n,
+            num_dims=nk_n,
+            num_input_distributions=ni_n,
+            num_sums=ns_n,
+            num_classes=nc,
+            exponential_family=ExponentialFamilyArray.NormalArray,
+            exponential_family_args={'min_var': 1e-6, 'max_var': 0.01},
+            use_em=False)
+        args_edges = EinsumNetwork.Args(
+            num_var=nd_e,
+            num_dims=nk_e,
+            num_input_distributions=ni_e,
+            num_sums=ns_e,
+            num_classes=nc,
+            exponential_family=ExponentialFamilyArray.NormalArray,
+            exponential_family_args={'min_var': 1e-6, 'max_var': 0.01},
+            use_em=False)
+
+        self.network_nodes = EinsumNetwork.EinsumNetwork(graph_nodes, args_nodes)
+        self.network_edges = EinsumNetwork.EinsumNetwork(graph_edges, args_edges)
+        self.network_nodes.initialize()
+        self.network_edges.initialize()
+
+        self.atom_list = atom_list
+
+        self.device = device
+        self.to(device)
+
+    @abstractmethod
+    def forward(self, x):
+        pass
+
+    @abstractmethod
+    def logpdf(self, x):
+        pass
+
+    @abstractmethod
+    def sample(self, num_samples):
+        pass
+
+
+class GraphSPNNaiveDeqA(GraphSPNNaiveDeqCore):
+    def __init__(
+        self, nd_n, nd_e, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
+    ):
+        graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
+        graph_edges = Graph.random_binary_trees(nd_e, nl_e, nr_e)
+
+        super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
+
+    def forward(self, x):
+        print(x['x_deq'].size())
+        print(x['a_deq'].size())
+        ll_nodes = self.network_nodes(x['x_deq'].to(self.device))
+        ll_edges = self.network_edges(x['a_deq'].view(-1, self.nd_edges).to(self.device))
+        return ll_nodes + ll_edges
+
+    def logpdf(self, x):
+        return self(x).mean()
+
+    def sample(self, num_samples):
+        x = self.network_nodes.sample(num_samples).cpu()
+        a = self.network_edges.sample(num_samples).view(-1, self.nd_nodes, self.nd_nodes).cpu()
+
+        x = x.to(torch.int)
+        a = a.to(torch.int)
+
+        return create_mols(x, a, self.atom_list)
+
+
 MODELS = {
     'graphspn_naive_a': GraphSPNNaiveA,
     'graphspn_naive_b': GraphSPNNaiveB,
@@ -491,6 +570,7 @@ MODELS = {
     'graphspn_naive_f': GraphSPNNaiveF,
     'graphspn_naive_g': GraphSPNNaiveG,
     'graphspn_naive_h': GraphSPNNaiveH,
+    'graphspn_naive_deq_a': GraphSPNNaiveDeqA,
 }
 
 
@@ -498,7 +578,7 @@ if __name__ == '__main__':
     checkpoint_dir = 'results/training/model_checkpoint/'
     evaluation_dir = 'results/training/model_evaluation/'
 
-    name = 'graphspn_naive_h'
+    name = 'graphspn_naive_deq_a'
 
     x_trn, _, _ = load_qm9(0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]

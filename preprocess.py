@@ -38,9 +38,10 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
     if available_prop:
         prop_list = list(input_df[prop_name])
     data_list = []
+    num_atoms = len(atom_list)
 
-    for i in tqdm(range(len(smile_list))):
-        mol = Chem.MolFromSmiles(smile_list[i])
+    for k in tqdm(range(len(smile_list))):
+        mol = Chem.MolFromSmiles(smile_list[k])
         Chem.Kekulize(mol)
         num_atom = mol.GetNumAtoms()
         if num_atom > num_max_atom:
@@ -49,11 +50,11 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
             tensor_size = num_max_atom if fixed_size else num_atom
 
             if ohe == True:
-                atom_tensor = torch.zeros(tensor_size, len(atom_list), dtype=torch.int8)
+                atom_tensor = torch.zeros(tensor_size, num_atoms + 1, dtype=torch.int8)
                 for atom_idx, atom in enumerate(mol.GetAtoms()):
                     atom_type = atom.GetAtomicNum()
                     atom_tensor[atom_idx, atom_list.index(atom_type)] = 1
-                atom_tensor[~torch.sum(atom_tensor, 1, dtype=torch.bool), 3] = 1
+                atom_tensor[~torch.sum(atom_tensor, 1, dtype=torch.bool), num_atoms] = 1
 
                 bond_tensor = torch.zeros(tensor_size, tensor_size, 4, dtype=torch.int8)
                 for bond in mol.GetBonds():
@@ -63,13 +64,13 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                     j = bond.GetEndAtomIdx()
                     bond_tensor[i, j, c] = 1.0
                     bond_tensor[j, i, c] = 1.0
-                bond_tensor[~torch.sum(bond_tensor, 0, dtype=torch.bool), 3] = 1
+                bond_tensor[~torch.sum(bond_tensor, 2, dtype=torch.bool)] = torch.tensor([0, 0, 0, 1], dtype=torch.int8)
 
-                atom_tensor_deq = atom_tensor + torch.rand(tensor_size, len(atom_list))
+                atom_tensor_deq = atom_tensor + torch.rand(tensor_size, num_atoms + 1)
                 bond_tensor_deq = bond_tensor + torch.rand(tensor_size, tensor_size, 4)
 
                 if available_prop:
-                    y = torch.tensor([float(prop_list[i])])
+                    y = torch.tensor([float(prop_list[k])])
                     data_list.append({'x': atom_tensor,
                                       'a': bond_tensor,
                                       'n': num_atom,
@@ -106,7 +107,7 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                 bond_tensor -= 1
 
                 if available_prop:
-                    y = torch.tensor([float(prop_list[i])])
+                    y = torch.tensor([float(prop_list[k])])
                     data_list.append({'x': atom_tensor,
                                       'a': bond_tensor,
                                       'n': num_atom,
