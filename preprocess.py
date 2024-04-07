@@ -55,15 +55,35 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                     atom_tensor[atom_idx, atom_list.index(atom_type)] = 1
                 atom_tensor[~torch.sum(atom_tensor, 1, dtype=torch.bool), 3] = 1
 
-                bond_tensor = torch.zeros(4, tensor_size, tensor_size, dtype=torch.int8)
+                bond_tensor = torch.zeros(tensor_size, tensor_size, 4, dtype=torch.int8)
                 for bond in mol.GetBonds():
                     bond_type = bond.GetBondType()
                     c = bond_encoder[bond_type]
                     i = bond.GetBeginAtomIdx()
                     j = bond.GetEndAtomIdx()
-                    bond_tensor[c, i, j] = 1.0
-                    bond_tensor[c, j, i] = 1.0
-                bond_tensor[3, ~torch.sum(bond_tensor, 0, dtype=torch.bool)] = 1
+                    bond_tensor[i, j, c] = 1.0
+                    bond_tensor[j, i, c] = 1.0
+                bond_tensor[~torch.sum(bond_tensor, 0, dtype=torch.bool), 3] = 1
+
+                atom_tensor_deq = atom_tensor + torch.rand(tensor_size, len(atom_list))
+                bond_tensor_deq = bond_tensor + torch.rand(tensor_size, tensor_size, 4)
+
+                if available_prop:
+                    y = torch.tensor([float(prop_list[i])])
+                    data_list.append({'x': atom_tensor,
+                                      'a': bond_tensor,
+                                      'n': num_atom,
+                                      'y': y,
+                                      's': Chem.MolToSmiles(mol),
+                                      'x_deq': atom_tensor_deq,
+                                      'a_deq': bond_tensor_deq})
+                else:
+                    data_list.append({'x': atom_tensor,
+                                      'a': bond_tensor,
+                                      'n': num_atom,
+                                      's': Chem.MolToSmiles(mol),
+                                      'x_deq': atom_tensor_deq,
+                                      'a_deq': bond_tensor_deq})
 
             else:
                 atom_tensor = torch.zeros(tensor_size, dtype=torch.int8)
@@ -85,11 +105,18 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                 atom_tensor -= 1
                 bond_tensor -= 1
 
-            if available_prop:
-                y = torch.tensor([float(prop_list[i])])
-                data_list.append({'x': atom_tensor, 'a': bond_tensor, 'n': num_atom, 'y': y, 's': Chem.MolToSmiles(mol)})
-            else:
-                data_list.append({'x': atom_tensor, 'a': bond_tensor, 'n': num_atom,         's': Chem.MolToSmiles(mol)})
+                if available_prop:
+                    y = torch.tensor([float(prop_list[i])])
+                    data_list.append({'x': atom_tensor,
+                                      'a': bond_tensor,
+                                      'n': num_atom,
+                                      'y': y,
+                                      's': Chem.MolToSmiles(mol)})
+                else:
+                    data_list.append({'x': atom_tensor,
+                                      'a': bond_tensor,
+                                      'n': num_atom,
+                                      's': Chem.MolToSmiles(mol)})
 
     if ohe == True:
         torch.save(MolecularDataset(data_list), f'{path}_ohe.pt')
@@ -131,7 +158,7 @@ def load_qm9(batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=
 
 
 if __name__ == '__main__':
-    ohe = False
+    ohe = True
     download_qm9(ohe)
     loader_trn, loader_val, loader_tst = load_qm9(100, ohe=ohe)
 
@@ -140,6 +167,9 @@ if __name__ == '__main__':
         print(x['x'][0])
         print(x['a'][0])
         print(x['s'][0])
+        if ohe == True:
+            print(x['x_deq'][0])
+            print(x['a_deq'][0])
 
     x_trn, x_val, x_tst = load_qm9(0, raw=True, ohe=ohe)
 

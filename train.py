@@ -109,28 +109,31 @@ if __name__ == '__main__':
     evaluation_dir = 'results/training/model_evaluation/'
     # hyperparam_dir = 'configs/training/model_hyperparam/'
 
-    with open('config/' + f'{name}.json', 'r') as fp:
-        hyperpars = json.load(fp)
+    with open('config/' + f'{name}.json', 'r') as f:
+        hyperpars = json.load(f)
 
     model = MODELS[name](**hyperpars['model_hyperpars'])
 
-    loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'])
+    # if 'deq' in name:
+    #     loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=True)
+    # else:
+    #     loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=False)
 
-    path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)
-    model = torch.load(path)
-    metrics = evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_dir)
+    # path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)
+    # model = torch.load(path)
+    # metrics = evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_dir)
 
-    print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metrics.items()))
-
-
+    # print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metrics.items()))
 
 
-    x_trn, _, _ = load_qm9(0, raw=True)
-    smiles_trn = [x['s'] for x in x_trn]
 
-    molecules_gen, smiles_gen = model.sample(1000)
 
-    results = utils.evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False)
+    # x_trn, _, _ = load_qm9(0, raw=True)
+    # smiles_trn = [x['s'] for x in x_trn]
 
-    img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
-    img.save(f'sampling.png')
+    # molecules_gen, smiles_gen = model.sample(1000)
+
+    # results = utils.evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False)
+
+    # img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
+    # img.save(f'sampling.png')
