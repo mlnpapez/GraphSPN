@@ -128,12 +128,12 @@ if __name__ == '__main__':
 
 
 
-    # x_trn, _, _ = load_qm9(0, raw=True)
-    # smiles_trn = [x['s'] for x in x_trn]
+    x_trn, _, _ = load_qm9(0, raw=True)
+    smiles_trn = [x['s'] for x in x_trn]
 
-    # molecules_gen, smiles_gen = model.sample(1000)
+    molecules_gen, smiles_gen = model.sample(1000)
 
-    # results = utils.evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False)
+    results = utils.evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False)
 
-    # img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
-    # img.save(f'sampling.png')
+    img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
+    img.save(f'sampling.png')

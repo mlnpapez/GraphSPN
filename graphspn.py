@@ -489,6 +489,8 @@ class GraphSPNNaiveDeqCore(nn.Module):
         super().__init__()
         self.nd_nodes = nd_n
         self.nd_edges = nd_e
+        self.nk_nodes = nk_n
+        self.nk_edges = nk_e
 
         args_nodes = EinsumNetwork.Args(
             num_var=nd_n,
@@ -542,10 +544,8 @@ class GraphSPNNaiveDeqA(GraphSPNNaiveDeqCore):
         super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list)
 
     def forward(self, x):
-        print(x['x_deq'].size())
-        print(x['a_deq'].size())
         ll_nodes = self.network_nodes(x['x_deq'].to(self.device))
-        ll_edges = self.network_edges(x['a_deq'].view(-1, self.nd_edges).to(self.device))
+        ll_edges = self.network_edges(x['a_deq'].view(-1, self.nd_edges, self.nk_edges).to(self.device))
         return ll_nodes + ll_edges
 
     def logpdf(self, x):
@@ -553,10 +553,12 @@ class GraphSPNNaiveDeqA(GraphSPNNaiveDeqCore):
 
     def sample(self, num_samples):
         x = self.network_nodes.sample(num_samples).cpu()
-        a = self.network_edges.sample(num_samples).view(-1, self.nd_nodes, self.nd_nodes).cpu()
+        a = self.network_edges.sample(num_samples).view(-1, self.nd_nodes, self.nd_nodes, self.nk_edges).cpu()
+        x = x.argmax(2)
+        a = a.argmax(3)
 
-        x = x.to(torch.int)
-        a = a.to(torch.int)
+        # x = x.to(torch.int)
+        # a = a.to(torch.int)
 
         return create_mols(x, a, self.atom_list)
 
