@@ -1,6 +1,6 @@
 {
     "dataset": "qm9_property",
-    "model": "graphspn_naive_f",
+    "model": "graphspn_naive_cat_f",
     "model_hyperpars": {
         "nd_n": 9,
         "nd_e": 81,
