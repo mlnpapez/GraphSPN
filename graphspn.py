@@ -359,7 +359,7 @@ class GraphSPNNaiveDeqD(GraphSPNNaiveCore):
 
     def forward(self, x):
         a = x['a_deq'].to(self.device)
-        m = torch.tril(torch.ones_like(a, dtype=torch.bool), diagonal=-1)
+        m = torch.tril(torch.ones(self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1).unsqueeze(0).unsqueeze(3).expand_as(a)
         l = a[m].view(-1, self.nd_edges, self.nk_edges)
 
         ll_nodes = self.network_nodes(x['x_deq'].to(self.device))
@@ -379,8 +379,8 @@ class GraphSPNNaiveDeqD(GraphSPNNaiveCore):
             x[i, :] = self.network_nodes.sample(1, class_idx=c).cpu()
             l[i, :] = self.network_edges.sample(1, class_idx=c).cpu()
 
-        m = torch.tril(torch.ones(num_samples, self.nd_nodes, self.nd_nodes, self.nk_edges, dtype=torch.bool), diagonal=-1)
-        a = torch.zeros(num_samples, self.nd_nodes, self.nd_nodes, self.nk_edges, dtype=torch.int)
+        a = torch.zeros(num_samples, self.nd_nodes, self.nd_nodes, self.nk_edges)
+        m = torch.tril(torch.ones(self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1).unsqueeze(0).unsqueeze(3).expand_as(a)
         a[m] = l.view(num_samples*self.nd_edges*self.nk_edges)
 
         x = x.argmax(2)
@@ -654,7 +654,7 @@ if __name__ == '__main__':
     checkpoint_dir = 'results/training/model_checkpoint/'
     evaluation_dir = 'results/training/model_evaluation/'
 
-    name = 'graphspn_naive_deq_c'
+    name = 'graphspn_naive_deq_d'
 
     x_trn, _, _ = load_qm9(0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
