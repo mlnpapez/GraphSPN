@@ -1,4 +1,5 @@
 import os
+from numpy import indices
 import torch
 import torch.nn as nn
 
@@ -14,19 +15,19 @@ from utils import *
 def create_mols(x, a, atom_list):
     nd_nodes = x.size(1)
     mols = []
-    smiles = []
+    smls = []
     for x, a in zip(x, a):
         rw_mol = Chem.RWMol()
 
         for i in range(nd_nodes):
-            if x[i].item() != 4:
+            if x[i].item() < 4:
                 rw_mol.AddAtom(Chem.Atom(atom_decoder(atom_list)[x[i].item()]))
 
         num_atoms = rw_mol.GetNumAtoms()
 
         for i in range(num_atoms):
             for j in range(num_atoms):
-                if a[i, j].item() != 3 and i > j:
+                if a[i, j].item() < 3 and i > j:
                     rw_mol.AddBond(i, j, bond_decoder[a[i, j].item()])
 
                     flag, valence = valency(rw_mol)
@@ -40,12 +41,12 @@ def create_mols(x, a, atom_list):
                         if atomic_number in (7, 8, 16) and (v - VALENCY_LIST[atomic_number]) == 1:
                             rw_mol.GetAtomWithIdx(k).SetFormalCharge(1)
 
-        # rw_mol = radical_electrons_to_hydrogens(rw_mol)
+        rw_mol = radical_electrons_to_hydrogens(rw_mol)
 
         mols.append(rw_mol)
-        smiles.append(Chem.MolToSmiles(rw_mol))
+        smls.append(Chem.MolToSmiles(rw_mol))
 
-    return mols, smiles
+    return mols, smls
 
 
 class GraphSPNNaiveCore(nn.Module):
@@ -440,6 +441,57 @@ class GraphSPNNaiveCatE(nn.Module):
         return create_mols(x, a, self.atom_list)
 
 
+# class GraphSPNNaiveCatE(nn.Module):
+#     def __init__(
+#         self, nd_n, nd_e, nk_n, nk_e, ns, ni, nl, nr, device='cuda', atom_list=[6, 7, 8, 9]
+#     ):
+#         super().__init__()
+#         self.nd_nodes = nd_n
+#         self.nd_edges = nd_e
+
+#         # nd = nd_n + nd_e
+#         nk = max(nk_n, nk_e)
+
+#         graph = Graph.random_binary_trees(nd_n, nl, nr)
+
+#         args = EinsumNetwork.Args(
+#             num_var=nd_n,
+#             num_dims=nd_n+1,
+#             num_input_distributions=ni,
+#             num_sums=ns,
+#             exponential_family=ExponentialFamilyArray.CategoricalArray,
+#             exponential_family_args={'K': nk},
+#             use_em=False)
+
+#         self.network = EinsumNetwork.EinsumNetwork(graph, args)
+#         self.network.initialize()
+
+#         self.atom_list = atom_list
+
+#         self.device = device
+#         self.to(device)
+
+#     def forward(self, x):
+#         z = torch.cat((x['a'].to(self.device), x['x'].unsqueeze(2).to(self.device)), dim=2)
+
+#         print(z[0:2])
+#         print(self.network.sample(2).to(torch.int).cpu())
+
+#         z = z.to(self.device)
+#         return self.network(z)
+
+#     def logpdf(self, x):
+#         return self(x).mean()
+
+#     def sample(self, num_samples):
+#         z = self.network.sample(num_samples).to(torch.int).cpu()
+
+#         x = z[:, 0 , :]
+#         a = z[:, 0:, :]
+
+#         return create_mols(x, a, self.atom_list)
+
+
 class GraphSPNNaiveCatF(nn.Module):
     def __init__(
         self, nd_n, nd_e, nk_n, nk_e, ns, ni, num_pieces, device='cuda', atom_list=[6, 7, 8, 9]
@@ -531,6 +583,11 @@ class GraphSPNNaiveCatG(nn.Module):
 
     def sample(self, num_samples):
         z = self.network.sample(num_samples).to(torch.int).cpu()
+
+        # z = self.network.sample(num_samples)
+        # # self.network.set_marginalization_idx(torch.arange(self.nd_nodes, self.nd_edges, device=self.device))
+        # self.network.set_marginalization_idx(torch.arange(0, self.nd_nodes, device=self.device))
+        # z = self.network.sample(x=z).to(torch.int).cpu()
 
         x = z[:, :self.nd_nodes]
         l = z[:, self.nd_nodes:]
@@ -734,9 +791,10 @@ if __name__ == '__main__':
     model_path = best_model(evaluation_dir + name + '/')[0]
     model_best = torch.load(checkpoint_dir + name + '/' + model_path)
 
-    molecules_gen, smiles_gen = model_best.sample(1000)
+    molecules_gen, smiles_gen = resample_invalid_mols(model_best, 1000)
+    # molecules_gen, smiles_gen = model_best.sample(1000)
 
-    results = evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False)
+    results = evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False, correct_mols=False)
 
     img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
     img.save(f'sampling.png')

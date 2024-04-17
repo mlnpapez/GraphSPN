@@ -1,10 +1,12 @@
 import os
 import re
 import copy
+import torch
 import pandas as pd
 
 from rdkit import Chem
 from rdkit.Chem import Descriptors
+from itertools import compress
 
 
 VALENCY_LIST = {6:4, 7:3, 8:2, 9:1, 15:3, 16:2, 17:1, 35:1, 53:1}
@@ -14,6 +16,36 @@ def atom_decoder(atom_list):
 bond_encoder = {Chem.BondType.SINGLE: 0, Chem.BondType.DOUBLE: 1, Chem.BondType.TRIPLE: 2}
 bond_decoder = {0: Chem.BondType.SINGLE, 1: Chem.BondType.DOUBLE, 2: Chem.BondType.TRIPLE}
 
+def valency(mol):
+    try:
+        Chem.SanitizeMol(mol, sanitizeOps=Chem.SanitizeFlags.SANITIZE_PROPERTIES)
+        return True, None
+    except ValueError as error:
+        error = str(error)
+        i = error.find('#')
+        valence = list(map(int, re.findall(r'\d+', error[i:])))
+        return False, valence
+
+def correct_mol(mol):
+    while True:
+        flag, atomid_valence = valency(mol)
+        if flag:
+            break
+        else:
+            assert len (atomid_valence) == 2
+            queue = []
+            for b in mol.GetAtomWithIdx(atomid_valence[0]).GetBonds():
+                queue.append((b.GetIdx(), int(b.GetBondType()), b.GetBeginAtomIdx(), b.GetEndAtomIdx()))
+            queue.sort(key=lambda tup: tup[1], reverse=True)
+            if len(queue) > 0:
+                start = queue[0][2]
+                end = queue[0][3]
+                bond_index = queue[0][1]
+                mol.RemoveBond(start, end)
+                if bond_index < 3:
+                    mol.AddBond(start, end, bond_decoder[bond_index])
+
+    return mol
 
 def radical_electrons_to_hydrogens(mol):
     mol = copy.deepcopy(mol)
@@ -28,16 +60,6 @@ def radical_electrons_to_hydrogens(mol):
                 a.SetNumExplicitHs(num_radicals)
     return mol
 
-def valency(mol):
-    try:
-        Chem.SanitizeMol(mol, sanitizeOps=Chem.SanitizeFlags.SANITIZE_PROPERTIES)
-        return True, None
-    except ValueError as error:
-        error = str(error)
-        i = error.find('#')
-        valence = list(map(int, re.findall(r'\d+', error[i:])))
-        return False, valence
-
 def valid_mol(mol):
     smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
     mol = Chem.MolFromSmiles(smiles) if mol is not None else None
@@ -45,10 +67,21 @@ def valid_mol(mol):
         return mol
     return None
 
-def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, debug=True):
+def isvalid(mol):
+    smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
+    mol = Chem.MolFromSmiles(smiles) if mol is not None else None
+    if mol is not None and '.' not in Chem.MolToSmiles(mol, isomericSmiles=True):
+        return True
+    else:
+        return False
+
+def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, debug=True, correct_mols=False):
     num_mols = len(mols)
 
-    valid_mols = [valid_mol(mol) for mol in mols]
+    if correct_mols == True:
+        valid_mols = [correct_mol(mol) for mol in mols]
+    else:
+        valid_mols = [valid_mol(mol) for mol in mols]
     valid_mols = [mol for mol in valid_mols if mol is not None]
 
     smiles_valid = [Chem.MolToSmiles(mol, isomericSmiles=False) for mol in valid_mols]
@@ -103,3 +136,18 @@ def best_model(path):
     df = pd.concat(dfs, ignore_index=True)
     idx = df['nll_tst_approx'].idxmin()
     return df.loc[idx]['file_path'], df.loc[idx]['nll_val_approx']
+
+
+def resample_invalid_mols(model, num_samples):
+    n = num_samples
+    mols = []
+    smls = []
+
+    while len(mols) != num_samples:
+        mols_gen, smls_gen = model.sample(n)
+        mols_val = [isvalid(mol) for mol in mols_gen]
+        mols.extend(compress(mols_gen, mols_val))
+        smls.extend(compress(smls_gen, mols_val))
+        n = num_samples - len(mols)
+
+    return mols, smls

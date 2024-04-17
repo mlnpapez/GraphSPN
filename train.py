@@ -33,7 +33,7 @@ def run_epoch(model, loader, optimizer=[]):
 
 def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir, num_nonimproving_epochs=30):
     optimizer = optim.Adam(model.parameters(), **hyperpars['optimizer_hyperpars'])
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=45, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
  
     lookahead_counter = num_nonimproving_epochs
     best_nll_val = 1e6
@@ -102,7 +102,7 @@ def evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_di
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
 
-    name = 'graphspn_naive_deq_h'
+    name = 'graphspn_naive_cat_h'
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
     molecules_gen, smiles_gen = model.sample(1000)
 
-    results = utils.evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False)
+    results = utils.evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False, correct_mols=False)
 
     img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
     img.save(f'sampling.png')
