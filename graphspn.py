@@ -155,8 +155,14 @@ class GraphSPNNaiveDeqA(GraphSPNNaiveCore):
         super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'deq')
 
     def forward(self, x):
-        ll_nodes = self.network_nodes(x['x_deq'].to(self.device))
-        ll_edges = self.network_edges(x['a_deq'].view(-1, self.nd_edges, self.nk_edges).to(self.device))
+        # z = x['x_deq'].to(self.device)
+        # a = x['a_deq'].to(self.device)
+        z = x['x'].to(self.device)
+        a = x['a'].to(self.device)
+        z = z + 0.1*torch.rand(z.size(), device=self.device)
+        a = a + 0.1*torch.rand(a.size(), device=self.device)
+        ll_nodes = self.network_nodes(z)
+        ll_edges = self.network_edges(a.view(-1, self.nd_edges, self.nk_edges).to(self.device))
         return ll_nodes + ll_edges
 
     def logpdf(self, x):
@@ -208,8 +214,14 @@ class GraphSPNNaiveDeqB(GraphSPNNaiveCore):
         super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'deq')
 
     def forward(self, x):
-        ll_nodes = self.network_nodes(x['x_deq'].to(self.device))
-        ll_edges = self.network_edges(x['a_deq'].view(-1, self.nd_edges, self.nk_edges).to(self.device))
+        # z = x['x_deq'].to(self.device)
+        # a = x['a_deq'].to(self.device)
+        z = x['x'].to(self.device)
+        a = x['a'].to(self.device)
+        z = z + 0.1*torch.rand(z.size(), device=self.device)
+        a = a + 0.1*torch.rand(a.size(), device=self.device)
+        ll_nodes = self.network_nodes(z)
+        ll_edges = self.network_edges(a.view(-1, self.nd_edges, self.nk_edges))
         return ll_nodes + ll_edges
 
     def logpdf(self, x):
@@ -275,8 +287,12 @@ class GraphSPNNaiveDeqC(GraphSPNNaiveCore):
         super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'deq')
 
     def forward(self, x):
-        z = x['x_deq'].to(self.device)
-        a = x['a_deq'].to(self.device)
+        # z = x['x_deq'].to(self.device)
+        # a = x['a_deq'].to(self.device)
+        z = x['x'].to(self.device)
+        a = x['a'].to(self.device)
+        z = z + 0.9*torch.rand(z.size(), device=self.device)
+        a = a + 0.9*torch.rand(a.size(), device=self.device)
         m = torch.tril(torch.ones(self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1).unsqueeze(0).unsqueeze(3).expand_as(a)
         l = a[m].view(-1, self.nd_edges, self.nk_edges)
 
@@ -362,8 +378,12 @@ class GraphSPNNaiveDeqD(GraphSPNNaiveCore):
         self.weights = nn.Parameter(torch.log_softmax(torch.randn(1, nc, device=self.device), dim=1), requires_grad=True)
 
     def forward(self, x):
-        z = x['x_deq'].to(self.device)
-        a = x['a_deq'].to(self.device)
+        # z = x['x_deq'].to(self.device)
+        # a = x['a_deq'].to(self.device)
+        z = x['x'].to(self.device)
+        a = x['a'].to(self.device)
+        z = z + 0.1*torch.rand(z.size(), device=self.device)
+        a = a + 0.1*torch.rand(a.size(), device=self.device)
         m = torch.tril(torch.ones(self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1).unsqueeze(0).unsqueeze(3).expand_as(a)
         l = a[m].view(-1, self.nd_edges, self.nk_edges)
 
@@ -730,8 +750,12 @@ class GraphSPNNaiveDeqH(GraphSPNNaiveMixCore):
         super().__init__(nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device, atom_list, 'deq')
 
     def forward(self, x):
+        # z = x['x_deq'].to(self.device)
+        # a = x['a_deq'].to(self.device)
         z = x['x'].to(self.device)
         a = x['a'].to(self.device)
+        z = z + 0.1*torch.rand(z.size(), device=self.device)
+        a = a + 0.1*torch.rand(a.size(), device=self.device)
         m = torch.tril(torch.ones(self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1).unsqueeze(0).unsqueeze(3).expand_as(a)
         l = a[m].view(-1, self.nd_edges, self.nk_edges)
 
@@ -783,7 +807,7 @@ if __name__ == '__main__':
     checkpoint_dir = 'results/training/model_checkpoint/'
     evaluation_dir = 'results/training/model_evaluation/'
 
-    name = 'graphspn_naive_cat_h'
+    name = 'graphspn_naive_cat_g'
 
     x_trn, _, _ = load_qm9(0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
@@ -791,10 +815,13 @@ if __name__ == '__main__':
     model_path = best_model(evaluation_dir + name + '/')[0]
     model_best = torch.load(checkpoint_dir + name + '/' + model_path)
 
-    molecules_gen, smiles_gen = resample_invalid_mols(model_best, 1000)
-    # molecules_gen, smiles_gen = model_best.sample(1000)
+    molecules_sam, smiles_sam = model_best.sample(1000)
+    molecules_res, smiles_res = resample_invalid_mols(model_best, 1000)
 
-    results = evaluate(molecules_gen, smiles_gen, smiles_trn, 1000, return_unique=True, debug=False, correct_mols=False)
+    results_resample_f = evaluate(molecules_sam, smiles_sam, smiles_trn, 1000, correct_mols=False)
+    results_resample_t = evaluate(molecules_res, smiles_res, smiles_trn, 1000, correct_mols=False)
+    print_results(results_resample_f)
+    print_results(results_resample_t)
 
-    img = MolsToGridImage(mols=results['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
+    img = MolsToGridImage(mols=results_resample_t['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
     img.save(f'sampling.png')

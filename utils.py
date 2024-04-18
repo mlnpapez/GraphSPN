@@ -75,7 +75,7 @@ def isvalid(mol):
     else:
         return False
 
-def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, debug=True, correct_mols=False):
+def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, debug=False, correct_mols=False):
     num_mols = len(mols)
 
     if correct_mols == True:
@@ -90,28 +90,25 @@ def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, deb
     num_valid_mols = len(valid_mols)
     num_smiles_unique = len(smiles_unique)
 
-    ratio_valid = num_valid_mols / num_mols * 100
-    ratio_unique = num_smiles_unique / num_valid_mols * 100 if num_valid_mols > 0 else 0.
-    ratio_unique_abs = num_smiles_unique / num_mols * 100
+    ratio_valid = num_valid_mols / num_mols
+    ratio_unique = num_smiles_unique / num_valid_mols if num_valid_mols > 0 else 0.
+    ratio_unique_abs = num_smiles_unique / num_mols
 
-    if return_unique: smiles_valid = smiles_unique
+    if return_unique == True: smiles_valid = smiles_unique
     mols_valid = [Chem.MolFromSmiles(s) for s in smiles_valid]
 
     if num_mols == 0:
         ratio_novel = 0.
     else:
         novel = num_mols - sum([1 for mol in smiles_gen if mol in smiles_trn])
-        ratio_novel = novel / num_mols * 100
-        ratio_novel_abs = novel / max_mols_gen * 100
+        ratio_novel = novel / num_mols
+        ratio_novel_abs = novel / max_mols_gen
 
 
-    if debug:
+    if debug == True:
         print("Valid molecules: {}".format(ratio_valid))
         for i, mol in enumerate(valid_mols):
             print("[{}] {}".format(i, Chem.MolToSmiles(mol, isomericSmiles=False)))
-    print("Validity: {:.3f}%, Uniqueness: {:.3f}%, Uniqueness (abs): {:.3f}% Novelty: {:.3f}%, Novelty (abs): {:.3f}%".format(
-        ratio_valid, ratio_unique, ratio_unique_abs, ratio_novel, ratio_novel_abs))
-
 
     results = {
         'mols_valid': mols_valid,
@@ -124,6 +121,23 @@ def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, deb
     }
 
     return results
+
+def print_results(results, abs=False):
+    ratio_valid  = results['ratio_valid']
+    ratio_novel  = results['ratio_novel']
+    ratio_unique = results['ratio_unique']
+
+    score = ratio_valid*ratio_unique*ratio_novel
+
+    if abs == True:
+        ratio_novel_abs  = results['ratio_novel_abs']
+        ratio_unique_abs = results['ratio_unique_abs']
+
+        print("Validity: {:.3f}%, Uniqueness: {:.3f}%, Uniqueness (abs): {:.3f}% Novelty: {:.3f}%, Novelty (abs): {:.3f}%, Score: {:.3f}%".format(
+            100*ratio_valid, 100*ratio_unique, 100*ratio_unique_abs, 100*ratio_novel, 100*ratio_novel_abs, 100*score))
+    else:
+        print("Validity: {:.3f}%, Uniqueness: {:.3f}%, Novelty: {:.3f}%, Score: {:.3f}%".format(
+            100*ratio_valid, 100*ratio_unique, 100*ratio_novel, 100*score))
 
 
 def best_model(path):
