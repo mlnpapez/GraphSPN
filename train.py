@@ -79,7 +79,7 @@ def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_d
 def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, evaluation_dir, num_samples=1000):
     model.eval()
 
-    nll_trn_approx = run_epoch(model, loader_trn)
+    # nll_trn_approx = run_epoch(model, loader_trn)
     nll_val_approx = run_epoch(model, loader_val)
     nll_tst_approx = run_epoch(model, loader_tst)
 
@@ -90,7 +90,7 @@ def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, e
     molecules_res_t, _, metrics_resample_t = utils.evaluate_molecules(molecules_res, smiles_res, smiles_trn, num_samples, correct_mols=False, affix='res_t_')
     molecules_cor_t, _, metrics_correction = utils.evaluate_molecules(molecules_sam, smiles_res, smiles_trn, num_samples, correct_mols=True,  affix='cor_t_')
     metrics_neglogliks = {
-        'nll_trn_approx': nll_trn_approx,
+        # 'nll_trn_approx': nll_trn_approx,
         'nll_val_approx': nll_val_approx,
         'nll_tst_approx': nll_tst_approx
     }
@@ -122,7 +122,7 @@ def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, e
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
 
-    name = 'graphspn_naive_cat_a'
+    name = 'graphspn_naive_deq_d'
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
