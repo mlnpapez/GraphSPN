@@ -75,7 +75,7 @@ def isvalid(mol):
     else:
         return False
 
-def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, debug=False, correct_mols=False):
+def evaluate_molecules(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, debug=False, correct_mols=False, metrics_only=False, affix=''):
     num_mols = len(mols)
 
     if correct_mols == True:
@@ -104,40 +104,33 @@ def evaluate(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, deb
         ratio_novel = novel / num_mols
         ratio_novel_abs = novel / max_mols_gen
 
-
     if debug == True:
         print("Valid molecules: {}".format(ratio_valid))
         for i, mol in enumerate(valid_mols):
             print("[{}] {}".format(i, Chem.MolToSmiles(mol, isomericSmiles=False)))
 
-    results = {
-        'mols_valid': mols_valid,
-        'smiles_valid': smiles_valid,
-        'ratio_valid': ratio_valid,
-        'ratio_unique': ratio_unique,
-        'ratio_unique_abs': ratio_unique_abs,
-        'ratio_novel': ratio_novel,
-        'ratio_novel_abs': ratio_novel_abs
+    metrics = {
+        f'{affix}valid': ratio_valid,
+        f'{affix}unique': ratio_unique,
+        f'{affix}unique_abs': ratio_unique_abs,
+        f'{affix}novel': ratio_novel,
+        f'{affix}novel_abs': ratio_novel_abs,
+        f'{affix}score': ratio_valid*ratio_unique*ratio_novel
     }
 
-    return results
+    if metrics_only == True:
+        return metrics
+    else:
+        return mols_valid, smiles_valid, metrics
 
-def print_results(results, abs=False):
-    ratio_valid  = results['ratio_valid']
-    ratio_novel  = results['ratio_novel']
-    ratio_unique = results['ratio_unique']
 
-    score = ratio_valid*ratio_unique*ratio_novel
-
+def print_metrics(valid, novel, unique, score, novel_abs=[], unique_abs=[], abs=False):
     if abs == True:
-        ratio_novel_abs  = results['ratio_novel_abs']
-        ratio_unique_abs = results['ratio_unique_abs']
-
         print("Validity: {:.3f}%, Uniqueness: {:.3f}%, Uniqueness (abs): {:.3f}% Novelty: {:.3f}%, Novelty (abs): {:.3f}%, Score: {:.3f}%".format(
-            100*ratio_valid, 100*ratio_unique, 100*ratio_unique_abs, 100*ratio_novel, 100*ratio_novel_abs, 100*score))
+            100*valid, 100*unique, 100*unique_abs, 100*novel, 100*novel_abs, 100*score))
     else:
         print("Validity: {:.3f}%, Uniqueness: {:.3f}%, Novelty: {:.3f}%, Score: {:.3f}%".format(
-            100*ratio_valid, 100*ratio_unique, 100*ratio_novel, 100*score))
+            100*valid, 100*unique, 100*novel, 100*score))
 
 
 def best_model(path):

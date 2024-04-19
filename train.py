@@ -7,6 +7,7 @@ import utils
 
 from graphspn import *
 from preprocess import MolecularDataset, load_qm9
+from rdkit.Chem.Draw import MolsToGridImage
 from tqdm import tqdm
 
 
@@ -75,26 +76,45 @@ def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_d
     return best_model_path
 
 
-def evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_dir):
+def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, evaluation_dir, num_samples=1000):
     model.eval()
 
-    # nll_trn_approx = run_epoch(model, loader_trn)
+    nll_trn_approx = run_epoch(model, loader_trn)
     nll_val_approx = run_epoch(model, loader_val)
     nll_tst_approx = run_epoch(model, loader_tst)
 
-    metrics = {
-        # 'nll_trn_approx': nll_trn_approx,
+    molecules_sam, smiles_sam = model.sample(num_samples)
+    molecules_res, smiles_res = resample_invalid_mols(model, num_samples)
+
+    molecules_res_f, _, metrics_resample_f = utils.evaluate_molecules(molecules_sam, smiles_sam, smiles_trn, num_samples, correct_mols=False, affix='res_f_')
+    molecules_res_t, _, metrics_resample_t = utils.evaluate_molecules(molecules_res, smiles_res, smiles_trn, num_samples, correct_mols=False, affix='res_t_')
+    molecules_cor_t, _, metrics_correction = utils.evaluate_molecules(molecules_sam, smiles_res, smiles_trn, num_samples, correct_mols=True,  affix='cor_t_')
+    metrics_neglogliks = {
+        'nll_trn_approx': nll_trn_approx,
         'nll_val_approx': nll_val_approx,
         'nll_tst_approx': nll_tst_approx
     }
+    metrics = {**metrics_resample_f, **metrics_resample_t, **metrics_correction, **metrics_neglogliks}
 
-    dir = evaluation_dir + hyperpars['model'] + '/'
-
-    df = pd.DataFrame.from_dict({**flatten_dict(hyperpars), **metrics}, 'index').transpose()
+    dir = evaluation_dir + 'metrics/' + hyperpars['model'] + '/'
     if os.path.isdir(dir) != True:
         os.makedirs(dir)
-    path = dir + dict2str(flatten_dict(hyperpars)) + '.csv'
-    df.to_csv(path, index=False)
+    path = dir + dict2str(flatten_dict(hyperpars))
+    df = pd.DataFrame.from_dict({**flatten_dict(hyperpars), **metrics}, 'index').transpose()
+    df.to_csv(path + '.csv', index=False)
+
+    dir = evaluation_dir + 'images/' + hyperpars['model'] + '/'
+    if os.path.isdir(dir) != True:
+        os.makedirs(dir)
+    path = dir + dict2str(flatten_dict(hyperpars))
+
+    img_res_f = MolsToGridImage(mols=molecules_res_f[0:64], molsPerRow=8, subImgSize=(200, 200), useSVG=False)
+    img_res_t = MolsToGridImage(mols=molecules_res_t[0:64], molsPerRow=8, subImgSize=(200, 200), useSVG=False)
+    img_cor_t = MolsToGridImage(mols=molecules_cor_t[0:64], molsPerRow=8, subImgSize=(200, 200), useSVG=False)
+
+    img_res_f.save(path + f'_img_res_f.png')
+    img_res_t.save(path + f'_img_res_t.png')
+    img_cor_t.save(path + f'_img_cor_t.png')
 
     return metrics
 
@@ -102,12 +122,12 @@ def evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_di
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
 
-    name = 'graphspn_naive_deq_h'
+    name = 'graphspn_naive_cat_a'
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
     evaluation_dir = 'results/training/model_evaluation/'
-    # hyperparam_dir = 'configs/training/model_hyperparam/'
+    hyperparam_dir = 'configs/training/model_hyperparam/'
 
     with open('config/' + f'{name}.json', 'r') as f:
         hyperpars = json.load(f)
@@ -119,22 +139,11 @@ if __name__ == '__main__':
     else:
         loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=False)
 
-    path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)
-    model = torch.load(path)
-    metrics = evaluate(model, loader_trn, loader_val, loader_tst, hyperpars, evaluation_dir)
-
-    print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metrics.items()))
-
     x_trn, _, _ = load_qm9(0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
 
-    molecules_sam, smiles_sam = model.sample(1000)
-    molecules_res, smiles_res = resample_invalid_mols(model, 1000)
+    path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)
+    model = torch.load(path)
+    metrics = evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, evaluation_dir)
 
-    results_resample_f = utils.evaluate(molecules_sam, smiles_sam, smiles_trn, 1000, correct_mols=False)
-    results_resample_t = utils.evaluate(molecules_res, smiles_res, smiles_trn, 1000, correct_mols=False)
-    print_results(results_resample_f)
-    print_results(results_resample_t)
-
-    img = MolsToGridImage(mols=results_resample_t['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
-    img.save(f'sampling.png')
+    print("\n".join(f'{key:<16}{value:>10.4f}' for key, value in metrics.items()))

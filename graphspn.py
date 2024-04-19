@@ -1,5 +1,4 @@
 import os
-from numpy import indices
 import torch
 import torch.nn as nn
 
@@ -8,7 +7,6 @@ from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
 from preprocess import MolecularDataset, load_qm9
 from torch.distributions import Categorical
 from rdkit import Chem
-from rdkit.Chem.Draw import MolsToGridImage
 from utils import *
 
 
@@ -807,21 +805,20 @@ if __name__ == '__main__':
     checkpoint_dir = 'results/training/model_checkpoint/'
     evaluation_dir = 'results/training/model_evaluation/'
 
-    name = 'graphspn_naive_cat_g'
+    name = 'graphspn_naive_cat_a'
 
     x_trn, _, _ = load_qm9(0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
 
-    model_path = best_model(evaluation_dir + name + '/')[0]
+    model_path = best_model(evaluation_dir + 'metrics/' + name + '/')[0]
     model_best = torch.load(checkpoint_dir + name + '/' + model_path)
 
-    molecules_sam, smiles_sam = model_best.sample(1000)
-    molecules_res, smiles_res = resample_invalid_mols(model_best, 1000)
+    num_samples = 1000
 
-    results_resample_f = evaluate(molecules_sam, smiles_sam, smiles_trn, 1000, correct_mols=False)
-    results_resample_t = evaluate(molecules_res, smiles_res, smiles_trn, 1000, correct_mols=False)
-    print_results(results_resample_f)
-    print_results(results_resample_t)
+    molecules_sam, smiles_sam = model_best.sample(num_samples)
+    molecules_res, smiles_res = resample_invalid_mols(model_best, num_samples)
 
-    img = MolsToGridImage(mols=results_resample_t['mols_valid'][0:100], molsPerRow=10, subImgSize=(200, 200), useSVG=False)
-    img.save(f'sampling.png')
+    molecules_val_f, smiles_val_f, metrics_resample_f = evaluate_molecules(molecules_sam, smiles_sam, smiles_trn, num_samples)
+    molecules_val_t, smiles_val_t, metrics_resample_t = evaluate_molecules(molecules_res, smiles_res, smiles_trn, num_samples)
+    print_metrics(**metrics_resample_f)
+    print_metrics(**metrics_resample_t)
