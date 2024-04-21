@@ -6,7 +6,7 @@ import pandas as pd
 import utils
 
 from graphspn import *
-from preprocess import MolecularDataset, load_qm9
+from datasets import MolecularDataset, load_dataset
 from rdkit.Chem.Draw import MolsToGridImage
 from tqdm import tqdm
 
@@ -122,7 +122,8 @@ def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, e
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
 
-    name = 'graphspn_naive_deq_d'
+    dataset = 'zinc250k'
+    name = 'graphspn_naive_cat_a'
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
@@ -135,11 +136,11 @@ if __name__ == '__main__':
     model = MODELS[name](**hyperpars['model_hyperpars'])
 
     if 'deq' in name:
-        loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=True)
+        loader_trn, loader_val, loader_tst = load_dataset(dataset, hyperpars['batch_size'], ohe=True)
     else:
-        loader_trn, loader_val, loader_tst = load_qm9(hyperpars['batch_size'], ohe=False)
+        loader_trn, loader_val, loader_tst = load_dataset(dataset, hyperpars['batch_size'], ohe=False)
 
-    x_trn, _, _ = load_qm9(0, raw=True)
+    x_trn, _, _ = load_dataset(dataset, 0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
 
     path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)

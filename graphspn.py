@@ -4,7 +4,7 @@ import torch.nn as nn
 
 from abc import abstractmethod
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
-from preprocess import MolecularDataset, load_qm9
+from datasets import MolecularDataset, load_dataset
 from torch.distributions import Categorical
 from rdkit import Chem
 from utils import *
@@ -807,7 +807,7 @@ if __name__ == '__main__':
 
     name = 'graphspn_naive_cat_a'
 
-    x_trn, _, _ = load_qm9(0, raw=True)
+    x_trn, _, _ = load_dataset('qm9', 0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
 
     model_path = best_model(evaluation_dir + 'metrics/' + name + '/')[0]

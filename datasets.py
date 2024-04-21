@@ -128,8 +128,11 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
 def loader_wrapper(x, batch_size, shuffle):
     return torch.utils.data.DataLoader(x, batch_size=batch_size, num_workers=2, shuffle=shuffle, pin_memory=True)
 
-def download_qm9(ohe=False):
-    file = 'qm9_property'
+def download_qm9(ohe=False, dir='data/molecular/'):
+    if os.path.isdir(dir) != True:
+        os.makedirs(dir)
+
+    file = f'{dir}qm9'
     url = 'https://raw.githubusercontent.com/divelab/DIG_storage/main/ggraph/qm9_property.csv'
 
     print('Downloading and preprocessing dataset.')
@@ -140,12 +143,27 @@ def download_qm9(ohe=False):
 
     print('Done.')
 
+def download_zinc250k(ohe=False, dir='data/molecular/'):
+    if os.path.isdir(dir) != True:
+        os.makedirs(dir)
 
-def load_qm9(batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=False):
+    file = f'{dir}zinc250k'
+    url = 'https://raw.githubusercontent.com/divelab/DIG_storage/main/ggraph/zinc250k_property.csv'
+
+    print('Downloading and preprocessing dataset.')
+
+    urllib.request.urlretrieve(url, f'{file}.csv')
+    preprocess(file, 'smile', 'penalized_logp', True, 38, [6, 7, 8, 9, 15, 16, 17, 35, 53], fixed_size=True, ohe=ohe)
+    os.remove(f'{file}.csv')
+
+    print('Done.')
+
+
+def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=False, dir='data/molecular/'):
     if ohe == True:
-        x = torch.load('qm9_property_ohe.pt')
+        x = torch.load(f'{dir}{dataset}_ohe.pt')
     else:
-        x = torch.load('qm9_property_int.pt')
+        x = torch.load(f'{dir}{dataset}_int.pt')
     x_trn, x_val, x_tst = x.split(val_size, tst_size, seed)
 
     if raw == True:
@@ -160,8 +178,16 @@ def load_qm9(batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=
 
 if __name__ == '__main__':
     ohe = True
-    download_qm9(ohe)
-    loader_trn, loader_val, loader_tst = load_qm9(100, ohe=ohe)
+    dataset = 'zinc250k'
+
+    # if dataset == 'qm9':
+    #     download_qm9(ohe)
+    # elif dataset == 'zinc250k':
+    #     download_zinc250k(ohe)
+    # else:
+    #     os.error('Unsupported dataset.')
+
+    loader_trn, loader_val, loader_tst = load_dataset(dataset, 100, ohe=ohe)
 
     for i, x in enumerate(loader_trn):
         print(i)
@@ -172,7 +198,7 @@ if __name__ == '__main__':
             print(x['x_deq'][0])
             print(x['a_deq'][0])
 
-    x_trn, x_val, x_tst = load_qm9(0, raw=True, ohe=ohe)
+    x_trn, x_val, x_tst = load_dataset(dataset, 0, raw=True, ohe=ohe)
 
     smiles = [x['s'] for x in x_trn]
     print(smiles)
