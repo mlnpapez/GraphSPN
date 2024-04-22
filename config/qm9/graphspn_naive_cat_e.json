@@ -1,16 +1,21 @@
 {
-    "dataset": "qm9_property",
+    "dataset": "qm9",
     "model": "graphspn_naive_cat_e",
     "model_hyperpars": {
         "nd_n": 9,
-        "nd_e": 81,
         "nk_n": 5,
         "nk_e": 4,
         "nl": 2,
-        "nr": 80,
-        "ns": 40,
-        "ni": 40,
-        "device": "cuda"
+        "nr": 10,
+        "ns": 10,
+        "ni": 5,
+        "atom_list": [
+            6,
+            7,
+            8,
+            9
+        ],
+        "device": "cpu"
     },
     "optimizer": "adam",
     "optimizer_hyperpars": {
@@ -20,7 +25,7 @@
             0.82
         ]
     },
-    "num_epochs": 20,
+    "num_epochs": 2,
     "batch_size": 1000,
     "seed": 0
 }

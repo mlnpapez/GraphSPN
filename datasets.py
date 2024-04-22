@@ -8,6 +8,22 @@ from tqdm import tqdm
 from utils import bond_encoder
 
 
+MOLECULAR_DATASETS = {
+    'qm9': {
+        'dataset': 'qm9',
+        'nd': 9,
+        'nk': 5,
+        'atom_list': [6, 7, 8, 9]
+    },
+    'zinc250k': {
+        'dataset': 'zinc250k',
+        'nd': 38,
+        'nk': 10,
+        'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53]
+    }
+}
+
+
 class MolecularDataset(torch.utils.data.Dataset):
     def __init__(self, data):
         self.data = data
@@ -138,7 +154,7 @@ def download_qm9(ohe=False, dir='data/molecular/'):
     print('Downloading and preprocessing dataset.')
 
     urllib.request.urlretrieve(url, f'{file}.csv')
-    preprocess(file, 'smile', 'penalized_logp', True, 9, [6, 7, 8, 9], fixed_size=True, ohe=ohe)
+    preprocess(file, 'smile', 'penalized_logp', True, MOLECULAR_DATASETS['qm9']['nd'], MOLECULAR_DATASETS['qm9']['atom_list'], fixed_size=True, ohe=ohe)
     os.remove(f'{file}.csv')
 
     print('Done.')
@@ -153,7 +169,7 @@ def download_zinc250k(ohe=False, dir='data/molecular/'):
     print('Downloading and preprocessing dataset.')
 
     urllib.request.urlretrieve(url, f'{file}.csv')
-    preprocess(file, 'smile', 'penalized_logp', True, 38, [6, 7, 8, 9, 15, 16, 17, 35, 53], fixed_size=True, ohe=ohe)
+    preprocess(file, 'smile', 'penalized_logp', True, MOLECULAR_DATASETS['zinc250k']['nd'], MOLECULAR_DATASETS['zinc250k']['atom_list'], fixed_size=True, ohe=ohe)
     os.remove(f'{file}.csv')
 
     print('Done.')

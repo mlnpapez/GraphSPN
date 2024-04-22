@@ -48,9 +48,7 @@ def create_mols(x, a, atom_list):
 
 
 class GraphSPNNaiveCore(nn.Module):
-    def __init__(
-        self, nc, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, regime
-    ):
+    def __init__(self, nc, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, regime):
         super().__init__()
         self.nd_nodes = nd_n
         self.nd_edges = nd_e
@@ -118,9 +116,8 @@ class GraphSPNNaiveCore(nn.Module):
 
 
 class GraphSPNNaiveCatA(GraphSPNNaiveCore):
-    def __init__(
-        self, nd_n, nd_e, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, atom_list, device='cuda'):
+        nd_e = nd_n**2
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
         graph_edges = Graph.random_binary_trees(nd_e, nl_e, nr_e)
 
@@ -144,21 +141,21 @@ class GraphSPNNaiveCatA(GraphSPNNaiveCore):
 
 
 class GraphSPNNaiveDeqA(GraphSPNNaiveCore):
-    def __init__(
-        self, nd_n, nd_e, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, dc_n, dc_e, atom_list, device='cuda'):
+        nd_e = nd_n**2
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
         graph_edges = Graph.random_binary_trees(nd_e, nl_e, nr_e)
 
         super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'deq')
 
+        self.dc_n = dc_n
+        self.dc_e = dc_e
+
     def forward(self, x):
-        # z = x['x_deq'].to(self.device)
-        # a = x['a_deq'].to(self.device)
         z = x['x'].to(self.device)
         a = x['a'].to(self.device)
-        z = z + 0.1*torch.rand(z.size(), device=self.device)
-        a = a + 0.1*torch.rand(a.size(), device=self.device)
+        z = z + self.dc_n*torch.rand(z.size(), device=self.device)
+        a = a + self.dc_e*torch.rand(a.size(), device=self.device)
         ll_nodes = self.network_nodes(z)
         ll_edges = self.network_edges(a.view(-1, self.nd_edges, self.nk_edges).to(self.device))
         return ll_nodes + ll_edges
@@ -176,13 +173,11 @@ class GraphSPNNaiveDeqA(GraphSPNNaiveCore):
 
 
 class GraphSPNNaiveCatB(GraphSPNNaiveCore):
-    def __init__(
-        self, nd_n, nd_e, nk_n, nk_e, nl_n, nr_n, ns_n, ns_e, ni_n, ni_e, num_pieces, device='cuda', atom_list = [6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, nl_n, nr_n, ns_n, ns_e, ni_n, ni_e, num_pieces, atom_list, device='cuda'):
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
         graph_edges = Graph.poon_domingos_structure(shape=[nd_n, nd_n], delta=[[nd_n / d, nd_n / d] for d in num_pieces])
 
-        super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'cat')
+        super().__init__(1, nd_n, nd_n**2, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'cat')
 
     def forward(self, x):
         ll_nodes = self.network_nodes(x['x'].to(self.device))
@@ -203,21 +198,20 @@ class GraphSPNNaiveCatB(GraphSPNNaiveCore):
 
 
 class GraphSPNNaiveDeqB(GraphSPNNaiveCore):
-    def __init__(
-        self, nd_n, nd_e, nk_n, nk_e, nl_n, nr_n, ns_n, ns_e, ni_n, ni_e, num_pieces, device='cuda', atom_list = [6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, nl_n, nr_n, ns_n, ns_e, ni_n, ni_e, num_pieces, dc_n, dc_e, atom_list, device='cuda'):
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
         graph_edges = Graph.poon_domingos_structure(shape=[nd_n, nd_n], delta=[[nd_n / d, nd_n / d] for d in num_pieces])
 
-        super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'deq')
+        super().__init__(1, nd_n, nd_n**2, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'deq')
+
+        self.dc_n = dc_n
+        self.dc_e = dc_e
 
     def forward(self, x):
-        # z = x['x_deq'].to(self.device)
-        # a = x['a_deq'].to(self.device)
         z = x['x'].to(self.device)
         a = x['a'].to(self.device)
-        z = z + 0.1*torch.rand(z.size(), device=self.device)
-        a = a + 0.1*torch.rand(a.size(), device=self.device)
+        z = z + self.dc_n*torch.rand(z.size(), device=self.device)
+        a = a + self.dc_e*torch.rand(a.size(), device=self.device)
         ll_nodes = self.network_nodes(z)
         ll_edges = self.network_edges(a.view(-1, self.nd_edges, self.nk_edges))
         return ll_nodes + ll_edges
@@ -235,9 +229,7 @@ class GraphSPNNaiveDeqB(GraphSPNNaiveCore):
 
 
 class GraphSPNNaiveCatC(GraphSPNNaiveCore):
-    def __init__(
-        self, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, atom_list, device='cuda',):
         nd_e = nd_n * (nd_n - 1) // 2
 
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
@@ -274,9 +266,7 @@ class GraphSPNNaiveCatC(GraphSPNNaiveCore):
 
 
 class GraphSPNNaiveDeqC(GraphSPNNaiveCore):
-    def __init__(
-        self, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, dc_n, dc_e, atom_list, device='cuda'):
         nd_e = nd_n * (nd_n - 1) // 2
 
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
@@ -284,13 +274,14 @@ class GraphSPNNaiveDeqC(GraphSPNNaiveCore):
 
         super().__init__(1, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'deq')
 
+        self.dc_n = dc_n
+        self.dc_e = dc_e
+
     def forward(self, x):
-        # z = x['x_deq'].to(self.device)
-        # a = x['a_deq'].to(self.device)
         z = x['x'].to(self.device)
         a = x['a'].to(self.device)
-        z = z + 0.9*torch.rand(z.size(), device=self.device)
-        a = a + 0.9*torch.rand(a.size(), device=self.device)
+        z = z + self.dc_n*torch.rand(z.size(), device=self.device)
+        a = a + self.dc_e*torch.rand(a.size(), device=self.device)
         m = torch.tril(torch.ones(self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1).unsqueeze(0).unsqueeze(3).expand_as(a)
         l = a[m].view(-1, self.nd_edges, self.nk_edges)
 
@@ -317,9 +308,7 @@ class GraphSPNNaiveDeqC(GraphSPNNaiveCore):
 
 
 class GraphSPNNaiveCatD(GraphSPNNaiveCore):
-    def __init__(
-        self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, atom_list, device='cuda'):
         nd_e = nd_n * (nd_n - 1) // 2
 
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
@@ -363,9 +352,7 @@ class GraphSPNNaiveCatD(GraphSPNNaiveCore):
 
 
 class GraphSPNNaiveDeqD(GraphSPNNaiveCore):
-    def __init__(
-        self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, dc_n, dc_e, atom_list, device='cuda'):
         nd_e = nd_n * (nd_n - 1) // 2
 
         graph_nodes = Graph.random_binary_trees(nd_n, nl_n, nr_n)
@@ -373,15 +360,16 @@ class GraphSPNNaiveDeqD(GraphSPNNaiveCore):
 
         super().__init__(nc, nd_n, nd_e, nk_n, nk_e, ns_n, ns_e, ni_n, ni_e, graph_nodes, graph_edges, device, atom_list, 'deq')
 
+        self.dc_n = dc_n
+        self.dc_e = dc_e
+
         self.weights = nn.Parameter(torch.log_softmax(torch.randn(1, nc, device=self.device), dim=1), requires_grad=True)
 
     def forward(self, x):
-        # z = x['x_deq'].to(self.device)
-        # a = x['a_deq'].to(self.device)
         z = x['x'].to(self.device)
         a = x['a'].to(self.device)
-        z = z + 0.1*torch.rand(z.size(), device=self.device)
-        a = a + 0.1*torch.rand(a.size(), device=self.device)
+        z = z + self.dc_n*torch.rand(z.size(), device=self.device)
+        a = a + self.dc_e*torch.rand(a.size(), device=self.device)
         m = torch.tril(torch.ones(self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1).unsqueeze(0).unsqueeze(3).expand_as(a)
         l = a[m].view(-1, self.nd_edges, self.nk_edges)
 
@@ -413,10 +401,9 @@ class GraphSPNNaiveDeqD(GraphSPNNaiveCore):
 
 
 class GraphSPNNaiveCatE(nn.Module):
-    def __init__(
-        self, nd_n, nd_e, nk_n, nk_e, ns, ni, nl, nr, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
         super().__init__()
+        nd_e = nd_n**2
         self.nd_nodes = nd_n
         self.nd_edges = nd_e
 
@@ -459,62 +446,10 @@ class GraphSPNNaiveCatE(nn.Module):
         return create_mols(x, a, self.atom_list)
 
 
-# class GraphSPNNaiveCatE(nn.Module):
-#     def __init__(
-#         self, nd_n, nd_e, nk_n, nk_e, ns, ni, nl, nr, device='cuda', atom_list=[6, 7, 8, 9]
-#     ):
-#         super().__init__()
-#         self.nd_nodes = nd_n
-#         self.nd_edges = nd_e
-
-#         # nd = nd_n + nd_e
-#         nk = max(nk_n, nk_e)
-
-#         graph = Graph.random_binary_trees(nd_n, nl, nr)
-
-#         args = EinsumNetwork.Args(
-#             num_var=nd_n,
-#             num_dims=nd_n+1,
-#             num_input_distributions=ni,
-#             num_sums=ns,
-#             exponential_family=ExponentialFamilyArray.CategoricalArray,
-#             exponential_family_args={'K': nk},
-#             use_em=False)
-
-#         self.network = EinsumNetwork.EinsumNetwork(graph, args)
-#         self.network.initialize()
-
-#         self.atom_list = atom_list
-
-#         self.device = device
-#         self.to(device)
-
-#     def forward(self, x):
-#         z = torch.cat((x['a'].to(self.device), x['x'].unsqueeze(2).to(self.device)), dim=2)
-
-#         print(z[0:2])
-#         print(self.network.sample(2).to(torch.int).cpu())
-
-#         z = z.to(self.device)
-#         return self.network(z)
-
-#     def logpdf(self, x):
-#         return self(x).mean()
-
-#     def sample(self, num_samples):
-#         z = self.network.sample(num_samples).to(torch.int).cpu()
-
-#         x = z[:, 0 , :]
-#         a = z[:, 0:, :]
-
-#         return create_mols(x, a, self.atom_list)
-
-
 class GraphSPNNaiveCatF(nn.Module):
-    def __init__(
-        self, nd_n, nd_e, nk_n, nk_e, ns, ni, num_pieces, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, num_pieces, atom_list, device='cuda'):
         super().__init__()
+        nd_e = nd_n**2
         self.nd_nodes = nd_n
         self.nd_edges = nd_e
 
@@ -558,9 +493,7 @@ class GraphSPNNaiveCatF(nn.Module):
 
 
 class GraphSPNNaiveCatG(nn.Module):
-    def __init__(
-        self, nd_n, nk_n, nk_e, ns, ni, nl, nr, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
         super().__init__()
         nd_e = nd_n * (nd_n - 1) // 2
 
@@ -618,9 +551,7 @@ class GraphSPNNaiveCatG(nn.Module):
 
 
 class GraphSPNNaiveMixCore(nn.Module):
-    def __init__(
-        self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device, atom_list, regime
-    ):
+    def __init__(self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device, atom_list, regime):
         super().__init__()
         nd_e = nd_n * (nd_n - 1) // 2
 
@@ -703,9 +634,7 @@ class GraphSPNNaiveMixCore(nn.Module):
 
 
 class GraphSPNNaiveCatH(GraphSPNNaiveMixCore):
-    def __init__(
-        self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, atom_list, device='cuda'):
         super().__init__(nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device, atom_list, 'cat')
 
     def forward(self, x):
@@ -742,18 +671,17 @@ class GraphSPNNaiveCatH(GraphSPNNaiveMixCore):
 
 
 class GraphSPNNaiveDeqH(GraphSPNNaiveMixCore):
-    def __init__(
-        self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device='cuda', atom_list=[6, 7, 8, 9]
-    ):
+    def __init__(self, nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, dc_n, dc_e, atom_list, device='cuda'):
         super().__init__(nc, nd_n, nk_n, nk_e, nl_n, nl_e, nr_n, nr_e, ns_n, ns_e, ni_n, ni_e, device, atom_list, 'deq')
 
+        self.dc_n = dc_n
+        self.dc_e = dc_e
+
     def forward(self, x):
-        # z = x['x_deq'].to(self.device)
-        # a = x['a_deq'].to(self.device)
         z = x['x'].to(self.device)
         a = x['a'].to(self.device)
-        z = z + 0.1*torch.rand(z.size(), device=self.device)
-        a = a + 0.1*torch.rand(a.size(), device=self.device)
+        z = z + self.dc_n*torch.rand(z.size(), device=self.device)
+        a = a + self.dc_e*torch.rand(a.size(), device=self.device)
         m = torch.tril(torch.ones(self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1).unsqueeze(0).unsqueeze(3).expand_as(a)
         l = a[m].view(-1, self.nd_edges, self.nk_edges)
 
@@ -805,13 +733,14 @@ if __name__ == '__main__':
     checkpoint_dir = 'results/training/model_checkpoint/'
     evaluation_dir = 'results/training/model_evaluation/'
 
+    dataset = 'qm9'
     name = 'graphspn_naive_cat_a'
 
-    x_trn, _, _ = load_dataset('qm9', 0, raw=True)
+    x_trn, _, _ = load_dataset(dataset, 0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
 
     model_path = best_model(evaluation_dir + 'metrics/' + name + '/')[0]
-    model_best = torch.load(checkpoint_dir + name + '/' + model_path)
+    model_best = torch.load(checkpoint_dir + f'{dataset}/{name}/' + model_path)
 
     num_samples = 1000
 

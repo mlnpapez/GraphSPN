@@ -8,6 +8,7 @@ import utils
 from graphspn import *
 from datasets import MolecularDataset, load_dataset
 from rdkit.Chem.Draw import MolsToGridImage
+from rdkit import RDLogger
 from tqdm import tqdm
 
 
@@ -48,7 +49,7 @@ def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_d
         model.eval()
         nll_val = run_epoch(model, loader_val)
 
-        dir = trainepoch_dir + 'samples/' + hyperpars['model'] + '/'
+        dir = trainepoch_dir + f'{hyperpars["dataset"]}/{hyperpars["model"]}/'
         if os.path.isdir(dir) != True:
             os.makedirs(dir)
 
@@ -58,7 +59,7 @@ def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_d
             best_nll_val = nll_val
             lookahead_counter = num_nonimproving_epochs
 
-            dir = checkpoint_dir + hyperpars['model'] + '/'
+            dir = checkpoint_dir + f'{hyperpars["dataset"]}/{hyperpars["model"]}/'
 
             if os.path.isdir(dir) != True:
                 os.makedirs(dir)
@@ -96,14 +97,14 @@ def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, e
     }
     metrics = {**metrics_resample_f, **metrics_resample_t, **metrics_correction, **metrics_neglogliks}
 
-    dir = evaluation_dir + 'metrics/' + hyperpars['model'] + '/'
+    dir = evaluation_dir + f'metrics/{hyperpars["dataset"]}/{hyperpars["model"]}/'
     if os.path.isdir(dir) != True:
         os.makedirs(dir)
     path = dir + dict2str(flatten_dict(hyperpars))
     df = pd.DataFrame.from_dict({**flatten_dict(hyperpars), **metrics}, 'index').transpose()
     df.to_csv(path + '.csv', index=False)
 
-    dir = evaluation_dir + 'images/' + hyperpars['model'] + '/'
+    dir = evaluation_dir + f'images/{hyperpars["dataset"]}/{hyperpars["model"]}/'
     if os.path.isdir(dir) != True:
         os.makedirs(dir)
     path = dir + dict2str(flatten_dict(hyperpars))
@@ -121,30 +122,33 @@ def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, e
 
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
+    RDLogger.DisableLog('rdApp.*')
 
     dataset = 'zinc250k'
-    name = 'graphspn_naive_cat_a'
+    models = MODELS.keys() # ['graphspn_naive_deq_b']
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
     evaluation_dir = 'results/training/model_evaluation/'
     hyperparam_dir = 'configs/training/model_hyperparam/'
 
-    with open('config/' + f'{name}.json', 'r') as f:
-        hyperpars = json.load(f)
+    for name in models:
+        with open(f'config/{dataset}/{name}.json', 'r') as f:
+            hyperpars = json.load(f)
 
-    model = MODELS[name](**hyperpars['model_hyperpars'])
+        model = MODELS[name](**hyperpars['model_hyperpars'])
+        print(model)
 
-    if 'deq' in name:
-        loader_trn, loader_val, loader_tst = load_dataset(dataset, hyperpars['batch_size'], ohe=True)
-    else:
-        loader_trn, loader_val, loader_tst = load_dataset(dataset, hyperpars['batch_size'], ohe=False)
+        if 'deq' in name:
+            loader_trn, loader_val, loader_tst = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], ohe=True)
+        else:
+            loader_trn, loader_val, loader_tst = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], ohe=False)
 
-    x_trn, _, _ = load_dataset(dataset, 0, raw=True)
-    smiles_trn = [x['s'] for x in x_trn]
+        x_trn, _, _ = load_dataset(hyperpars['dataset'], 0, raw=True)
+        smiles_trn = [x['s'] for x in x_trn]
 
-    path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)
-    model = torch.load(path)
-    metrics = evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, evaluation_dir)
+        path = train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir)
+        model = torch.load(path)
+        metrics = evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, evaluation_dir)
 
-    print("\n".join(f'{key:<16}{value:>10.4f}' for key, value in metrics.items()))
+        print("\n".join(f'{key:<16}{value:>10.4f}' for key, value in metrics.items()))

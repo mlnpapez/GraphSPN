@@ -1,0 +1,36 @@
+{
+    "dataset": "zinc250k",
+    "model": "graphspn_naive_cat_g",
+    "model_hyperpars": {
+        "nd_n": 38,
+        "nk_n": 10,
+        "nk_e": 4,
+        "nl": 2,
+        "nr": 10,
+        "ns": 10,
+        "ni": 5,
+        "atom_list": [
+            6,
+            7,
+            8,
+            9,
+            15,
+            16,
+            17,
+            35,
+            53
+        ],
+        "device": "cpu"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": 0.05,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": 2,
+    "batch_size": 1000,
+    "seed": 0
+}
