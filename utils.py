@@ -3,13 +3,29 @@ import re
 import copy
 import torch
 import pandas as pd
+import torch.optim as optim
 
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from itertools import compress
+from rdkit.Chem.Draw import MolsToGridImage
+from tqdm import tqdm
 
 
-VALENCY_LIST = {6:4, 7:3, 8:2, 9:1, 15:3, 16:2, 17:1, 35:1, 53:1}
+IGNORED_HYPERPARS = [
+    'atom_list'
+]
+
+
+def flatten_dict(d, input_key=''):
+    if isinstance(d, dict):
+        return {k if input_key else k: v for key, value in d.items() for k, v in flatten_dict(value, key).items()}
+    else:
+        return {input_key: d}
+
+def dict2str(d):
+    return '_'.join([f'{key}={value}' for key, value in d.items() if key not in IGNORED_HYPERPARS])
+
 
 def atom_decoder(atom_list):
     return {i: atom_list[i] for i in range(len(atom_list))}
@@ -158,3 +174,104 @@ def resample_invalid_mols(model, num_samples):
         n = num_samples - len(mols)
 
     return mols, smls
+
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
+def run_epoch(model, loader, optimizer=[], verbose=False):
+    nll_sum = 0.
+    for x in tqdm(loader, leave=False, disable=verbose):
+        nll = -model.logpdf(x)
+        nll_sum += nll * len(x)
+        if optimizer:
+            optimizer.zero_grad()
+            nll.backward()
+            optimizer.step()
+
+    return (nll_sum / len(loader.dataset)).item()
+
+def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir, num_nonimproving_epochs=30, verbose=False):
+    optimizer = optim.Adam(model.parameters(), **hyperpars['optimizer_hyperpars'])
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
+ 
+    lookahead_counter = num_nonimproving_epochs
+    best_nll_val = 1e6
+    best_model_path = None
+
+    for epoch in range(hyperpars['num_epochs']):
+        model.train()
+        nll_trn = run_epoch(model, loader_trn, verbose=verbose, optimizer=optimizer)
+        scheduler.step()
+
+        model.eval()
+        nll_val = run_epoch(model, loader_val, verbose=verbose)
+
+        dir = trainepoch_dir + f'{hyperpars["dataset"]}/{hyperpars["model"]}/'
+        if os.path.isdir(dir) != True:
+            os.makedirs(dir)
+
+        print(f'epoch {epoch:3d}: ll_trn={-nll_trn:.4f}, ll_val={-nll_val:.4f}')
+
+        if nll_val < best_nll_val:
+            best_nll_val = nll_val
+            lookahead_counter = num_nonimproving_epochs
+
+            dir = checkpoint_dir + f'{hyperpars["dataset"]}/{hyperpars["model"]}/'
+
+            if os.path.isdir(dir) != True:
+                os.makedirs(dir)
+            if best_model_path != None:
+                os.remove(best_model_path)
+            path = dir + dict2str(flatten_dict(hyperpars)) + '.pt'
+            torch.save(model, path)
+            best_model_path = path
+        else:
+            lookahead_counter -= 1
+
+        if lookahead_counter == 0:
+            break
+
+    return best_model_path
+
+def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, evaluation_dir, num_samples=1000):
+    model.eval()
+
+    # nll_trn_approx = run_epoch(model, loader_trn)
+    nll_val_approx = run_epoch(model, loader_val)
+    nll_tst_approx = run_epoch(model, loader_tst)
+
+    molecules_sam, smiles_sam = model.sample(num_samples)
+    molecules_res, smiles_res = resample_invalid_mols(model, num_samples)
+
+    molecules_res_f, _, metrics_resample_f = evaluate_molecules(molecules_sam, smiles_sam, smiles_trn, num_samples, correct_mols=False, affix='res_f_')
+    molecules_res_t, _, metrics_resample_t = evaluate_molecules(molecules_res, smiles_res, smiles_trn, num_samples, correct_mols=False, affix='res_t_')
+    molecules_cor_t, _, metrics_correction = evaluate_molecules(molecules_sam, smiles_res, smiles_trn, num_samples, correct_mols=True,  affix='cor_t_')
+    metrics_neglogliks = {
+        # 'nll_trn_approx': nll_trn_approx,
+        'nll_val_approx': nll_val_approx,
+        'nll_tst_approx': nll_tst_approx
+    }
+    metrics = {**metrics_resample_f, **metrics_resample_t, **metrics_correction, **metrics_neglogliks, "num_params": count_parameters(model)}
+
+    dir = evaluation_dir + f'metrics/{hyperpars["dataset"]}/{hyperpars["model"]}/'
+    if os.path.isdir(dir) != True:
+        os.makedirs(dir)
+    path = dir + dict2str(flatten_dict(hyperpars))
+    df = pd.DataFrame.from_dict({**flatten_dict(hyperpars), **metrics}, 'index').transpose()
+    df.to_csv(path + '.csv', index=False)
+
+    dir = evaluation_dir + f'images/{hyperpars["dataset"]}/{hyperpars["model"]}/'
+    if os.path.isdir(dir) != True:
+        os.makedirs(dir)
+    path = dir + dict2str(flatten_dict(hyperpars))
+
+    img_res_f = MolsToGridImage(mols=molecules_res_f[0:64], molsPerRow=8, subImgSize=(200, 200), useSVG=False)
+    img_res_t = MolsToGridImage(mols=molecules_res_t[0:64], molsPerRow=8, subImgSize=(200, 200), useSVG=False)
+    img_cor_t = MolsToGridImage(mols=molecules_cor_t[0:64], molsPerRow=8, subImgSize=(200, 200), useSVG=False)
+
+    img_res_f.save(path + f'_img_res_f.png')
+    img_res_t.save(path + f'_img_res_t.png')
+    img_cor_t.save(path + f'_img_cor_t.png')
+
+    return metrics

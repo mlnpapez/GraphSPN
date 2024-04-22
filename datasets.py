@@ -136,9 +136,9 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                                       's': Chem.MolToSmiles(mol)})
 
     if ohe == True:
-        torch.save(MolecularDataset(data_list), f'{path}_ohe.pt')
+        torch.save(data_list, f'{path}_ohe.pt')
     else:
-        torch.save(MolecularDataset(data_list), f'{path}_int.pt')
+        torch.save(data_list, f'{path}_int.pt')
 
 
 def loader_wrapper(x, batch_size, shuffle):
@@ -177,9 +177,9 @@ def download_zinc250k(ohe=False, dir='data/molecular/'):
 
 def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=False, dir='data/molecular/'):
     if ohe == True:
-        x = torch.load(f'{dir}{dataset}_ohe.pt')
+        x = MolecularDataset(torch.load(f'{dir}{dataset}_ohe.pt'))
     else:
-        x = torch.load(f'{dir}{dataset}_int.pt')
+        x = MolecularDataset(torch.load(f'{dir}{dataset}_int.pt'))
     x_trn, x_val, x_tst = x.split(val_size, tst_size, seed)
 
     if raw == True:
@@ -196,12 +196,12 @@ if __name__ == '__main__':
     ohe = True
     dataset = 'zinc250k'
 
-    # if dataset == 'qm9':
-    #     download_qm9(ohe)
-    # elif dataset == 'zinc250k':
-    #     download_zinc250k(ohe)
-    # else:
-    #     os.error('Unsupported dataset.')
+    if dataset == 'qm9':
+        download_qm9(ohe)
+    elif dataset == 'zinc250k':
+        download_zinc250k(ohe)
+    else:
+        os.error('Unsupported dataset.')
 
     loader_trn, loader_val, loader_tst = load_dataset(dataset, 100, ohe=ohe)
 
@@ -216,5 +216,5 @@ if __name__ == '__main__':
 
     x_trn, x_val, x_tst = load_dataset(dataset, 0, raw=True, ohe=ohe)
 
-    smiles = [x['s'] for x in x_trn]
-    print(smiles)
+    # smiles = [x['s'] for x in x_trn]
+    # print(smiles)

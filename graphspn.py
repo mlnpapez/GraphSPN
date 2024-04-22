@@ -1,13 +1,15 @@
 import os
 import torch
 import torch.nn as nn
+import datasets
 
 from abc import abstractmethod
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
-from datasets import MolecularDataset, load_dataset
 from torch.distributions import Categorical
 from rdkit import Chem
 from utils import *
+
+VALENCY_LIST = {6:4, 7:3, 8:2, 9:1, 15:3, 16:2, 17:1, 35:1, 53:1}
 
 
 def create_mols(x, a, atom_list):
@@ -736,7 +738,7 @@ if __name__ == '__main__':
     dataset = 'qm9'
     name = 'graphspn_naive_cat_a'
 
-    x_trn, _, _ = load_dataset(dataset, 0, raw=True)
+    x_trn, _, _ = datasets.load_dataset(dataset, 0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
 
     model_path = best_model(evaluation_dir + 'metrics/' + name + '/')[0]
