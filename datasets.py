@@ -15,12 +15,12 @@ MOLECULAR_DATASETS = {
         'nk': 5,
         'atom_list': [6, 7, 8, 9]
     },
-    'zinc250k': {
-        'dataset': 'zinc250k',
-        'nd': 38,
-        'nk': 10,
-        'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53]
-    }
+    # 'zinc250k': {
+    #     'dataset': 'zinc250k',
+    #     'nd': 38,
+    #     'nk': 10,
+    #     'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53]
+    # }
 }
 
 

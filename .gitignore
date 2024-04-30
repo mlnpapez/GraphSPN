@@ -2,8 +2,7 @@ __pycache__
 data
 results
 einsum
-notes.txt
-sampling.png
+gridsearch.log
 
 qm9.pdf
 qm9.tab
