@@ -6,7 +6,7 @@ from datasets import MOLECULAR_DATASETS
 NUM_EPOCHS = 40
 
 
-def template_naive_cat_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_a",
@@ -35,9 +35,10 @@ def template_naive_cat_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_cat_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_b",
@@ -65,9 +66,10 @@ def template_naive_cat_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_cat_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_c",
@@ -96,9 +98,10 @@ def template_naive_cat_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_cat_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_d",
@@ -128,9 +131,10 @@ def template_naive_cat_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_cat_e(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_e(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_e",
@@ -155,9 +159,10 @@ def template_naive_cat_e(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_cat_f(dataset, nd, nk, atom_list,                     ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_f(dataset, nd, nk, atom_list,                     ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_f",
@@ -181,9 +186,10 @@ def template_naive_cat_f(dataset, nd, nk, atom_list,                     ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_cat_g(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_g(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_g",
@@ -208,9 +214,10 @@ def template_naive_cat_g(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_cat_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_h",
@@ -240,9 +247,10 @@ def template_naive_cat_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_deq_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_a",
@@ -273,9 +281,10 @@ def template_naive_deq_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_deq_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1, num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1, num_pieces=[2], batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_b",
@@ -305,9 +314,10 @@ def template_naive_deq_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_deq_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_c",
@@ -338,9 +348,10 @@ def template_naive_deq_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_deq_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_d",
@@ -372,9 +383,10 @@ def template_naive_deq_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
-def template_naive_deq_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_h",
@@ -406,7 +418,8 @@ def template_naive_deq_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
 }
 
 

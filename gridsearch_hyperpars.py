@@ -4,7 +4,7 @@ from datasets import MOLECULAR_DATASETS
 from templates_hyperpars import *
 
 
-def grid_naive_cat_a(dataset):
+def grid_naive_cat_a(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
     ns = [10, 40, 80]
@@ -12,11 +12,12 @@ def grid_naive_cat_a(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed)
+    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_cat_a(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_cat_b(dataset):
+def grid_naive_cat_b(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
     ns = [10, 40, 80]
@@ -25,11 +26,12 @@ def grid_naive_cat_b(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nl, nr, ns, ni, num_pieces, batch_size, lr, seed)
+    grid = itertools.product(nl, nr, ns, ni, num_pieces, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_cat_b(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_cat_c(dataset):
+def grid_naive_cat_c(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
     ns = [10, 40, 80]
@@ -37,11 +39,12 @@ def grid_naive_cat_c(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed)
+    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_cat_c(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_cat_d(dataset):
+def grid_naive_cat_d(dataset, num_max_atoms=None):
     nc = [10, 40, 80]
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
@@ -50,11 +53,12 @@ def grid_naive_cat_d(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nc, nl, nr, ns, ni, batch_size, lr, seed)
+    grid = itertools.product(nc, nl, nr, ns, ni, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_cat_d(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_cat_e(dataset):
+def grid_naive_cat_e(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
     ns = [10, 40, 80]
@@ -62,22 +66,24 @@ def grid_naive_cat_e(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed)
+    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_cat_e(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_cat_f(dataset):
+def grid_naive_cat_f(dataset, num_max_atoms=None):
     ns = [10, 40, 80]
     ni = [10, 40, 80]
     num_pieces = [[2], [4], [2, 2], [4, 4]]
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(ns, ni, num_pieces, batch_size, lr, seed)
+    grid = itertools.product(ns, ni, num_pieces, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_cat_f(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_cat_g(dataset):
+def grid_naive_cat_g(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
     ns = [10, 40, 80]
@@ -85,11 +91,12 @@ def grid_naive_cat_g(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed)
+    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_cat_g(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_cat_h(dataset):
+def grid_naive_cat_h(dataset, num_max_atoms=None):
     nc = [10, 40, 80]
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
@@ -98,11 +105,12 @@ def grid_naive_cat_h(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nc, nl, nr, ns, ni, batch_size, lr, seed)
+    grid = itertools.product(nc, nl, nr, ns, ni, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_cat_h(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_deq_a(dataset):
+def grid_naive_deq_a(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
     ns = [10, 40, 80]
@@ -111,11 +119,12 @@ def grid_naive_deq_a(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nl, nr, ns, ni, dc, batch_size, lr, seed)
+    grid = itertools.product(nl, nr, ns, ni, dc, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_deq_a(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_deq_b(dataset):
+def grid_naive_deq_b(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
     ns = [10, 40, 80]
@@ -125,11 +134,12 @@ def grid_naive_deq_b(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nl, nr, ns, ni, num_pieces, dc, batch_size, lr, seed)
+    grid = itertools.product(nl, nr, ns, ni, num_pieces, dc, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_deq_b(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_deq_c(dataset):
+def grid_naive_deq_c(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
     ns = [10, 40, 80]
@@ -138,11 +148,12 @@ def grid_naive_deq_c(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nl, nr, ns, ni, dc, batch_size, lr, seed)
+    grid = itertools.product(nl, nr, ns, ni, dc, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_deq_c(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_deq_d(dataset):
+def grid_naive_deq_d(dataset, num_max_atoms=None):
     nc = [10, 40, 80]
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
@@ -152,11 +163,12 @@ def grid_naive_deq_d(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nc, nl, nr, ns, ni, dc, batch_size, lr, seed)
+    grid = itertools.product(nc, nl, nr, ns, ni, dc, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_deq_d(*dataset.values(), *p) for p in list(grid)]
-def grid_naive_deq_h(dataset):
+def grid_naive_deq_h(dataset, num_max_atoms=None):
     nc = [10, 40, 80]
     nl = [1, 2, 3]
     nr = [1, 10, 40, 80]
@@ -166,8 +178,9 @@ def grid_naive_deq_h(dataset):
     batch_size = [1000]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]
+    num_max_atoms = [float("inf")] if num_max_atoms is None else num_max_atoms
 
-    grid = itertools.product(nc, nl, nr, ns, ni, dc, batch_size, lr, seed)
+    grid = itertools.product(nc, nl, nr, ns, ni, dc, batch_size, lr, seed, num_max_atoms)
 
     return [template_naive_deq_h(*dataset.values(), *p) for p in list(grid)]
 

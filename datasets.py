@@ -15,12 +15,12 @@ MOLECULAR_DATASETS = {
         'nk': 5,
         'atom_list': [6, 7, 8, 9]
     },
-    # 'zinc250k': {
-    #     'dataset': 'zinc250k',
-    #     'nd': 38,
-    #     'nk': 10,
-    #     'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53]
-    # }
+    'zinc250k': {
+        'dataset': 'zinc250k',
+        'nd': 38,
+        'nk': 10,
+        'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53]
+    }
 }
 
 
@@ -175,11 +175,22 @@ def download_zinc250k(ohe=False, dir='data/molecular/'):
     print('Done.')
 
 
-def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=False, dir='data/molecular/'):
+def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=False, num_max_atoms=None, dir='data/molecular/'):
     if ohe == True:
         x = MolecularDataset(torch.load(f'{dir}{dataset}_ohe.pt'))
     else:
         x = MolecularDataset(torch.load(f'{dir}{dataset}_int.pt'))
+
+    if num_max_atoms is not None:
+        prev_len = len(x)
+        f = lambda sample: sample['n'] <= num_max_atoms
+        data = list(filter(f, x.data))
+        x = MolecularDataset(data)
+        val_size = int(len(x)/prev_len * val_size)
+        tst_size = int(len(x)/prev_len * tst_size)
+        # print(val_size, tst_size)
+        # print(prev_len, len(x))
+
     x_trn, x_val, x_tst = x.split(val_size, tst_size, seed)
 
     if raw == True:
@@ -194,16 +205,17 @@ def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_siz
 
 if __name__ == '__main__':
     ohe = True
+    download = False
     dataset = 'zinc250k'
+    if download:
+        if dataset == 'qm9':
+            download_qm9(ohe)
+        elif dataset == 'zinc250k':
+            download_zinc250k(ohe)
+        else:
+            os.error('Unsupported dataset.')
 
-    if dataset == 'qm9':
-        download_qm9(ohe)
-    elif dataset == 'zinc250k':
-        download_zinc250k(ohe)
-    else:
-        os.error('Unsupported dataset.')
-
-    loader_trn, loader_val, loader_tst = load_dataset(dataset, 100, ohe=ohe)
+    loader_trn, loader_val, loader_tst = load_dataset(dataset, 100, ohe=ohe, num_max_atoms=None)
 
     for i, x in enumerate(loader_trn):
         print(i)
