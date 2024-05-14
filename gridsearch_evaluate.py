@@ -1,5 +1,4 @@
 import os
-import json
 import pandas as pd
 import graphspn
 
@@ -7,17 +6,35 @@ from tqdm import tqdm
 from pylatex import Document, Package, NoEscape
 
 IGNORE = [
+    'atom_list',
     'device',
     'seed',
-    'nll_trn_approx',
+    'res_f_valid',
+    'res_t_valid',
+    'cor_t_valid',
+    'res_f_unique',
+    'cor_t_unique',
+    'res_t_unique',
+    'res_f_novel',
+    'res_t_novel',
+    'cor_t_novel',
+    'res_f_novel_abs',
+    'res_t_novel_abs',
+    'cor_t_novel_abs',
+    'res_f_score',
+    'res_t_score',
+    'cor_t_score',
+    'res_f_unique_abs',
+    'res_t_unique_abs',
+    'cor_t_unique_abs',
     'nll_val_approx',
     'nll_tst_approx',
-    'num_parameters',
+    'num_params',
     'file_path',
     ]
 
-COLUMN_WORKING_NAMES = ['model', 'validity', 'uniqueness', 'novelty']
-COLUMN_DISPLAY_NAMES = ['Model', 'Validity', 'Uniqueness', 'Novelty']
+COLUMN_WORKING_NAMES = ['model', 'validity', 'uniqueness', 'novelty', 'score']
+COLUMN_DISPLAY_NAMES = ['Model', 'Validity', 'Uniqueness', 'Novelty', 'Score']
 
 def baseline_models_qm9():
     data = [['GVAE', 'GraphNVP', 'GRF', 'GraphAF', 'GraphDF', 'MoFlow', 'ModFlow'],
@@ -54,52 +71,43 @@ def latexify_table(r_name, w_name, clean_tex=True):
 
 
 def find_best_models(dataset, names_models, evaluation_dir, bestmodels_dir):
-    file_unsu = bestmodels_dir + f'tabular_nll_best_models'
     data_unsu = pd.DataFrame(0., index=range(len(names_models)), columns=COLUMN_WORKING_NAMES)
 
-    path_models = {}
-    # data_unsu.loc[i, 'dataset'] = dataset
     for i, model in tqdm(enumerate(names_models), leave=False):
         res_frames = []
-        path = evaluation_dir + 'metrics/' + model + '/'
+        path = evaluation_dir + 'metrics/' + f'{dataset}/' + f'{model}/'
         for f in os.listdir(path):
             data = pd.read_csv(path + f)
             data['file_path'] = f.replace('.csv', '.pt')
             res_frames.append(data)
 
         cat_frames = pd.concat(res_frames)
-        # grp_frames = cat_frames.groupby(list(filter(lambda x: x not in IGNORE, cat_frames.columns)))
-        # agg_frames = grp_frames.agg({
-        #     'nll_trn_approx': 'mean',
-        #     'nll_val_approx': 'mean',
-        #     'nll_tst_approx': 'mean',
-        #     'file_path': 'first'
-        # })
-        # best_value = agg_frames.nsmallest(n=1, columns='nll_val_approx')
-        # best_frame = grp_frames.get_group(agg_frames['nll_val_approx'].idxmin())
+        grp_frames = cat_frames.groupby(list(filter(lambda x: x not in IGNORE, cat_frames.columns)))
+        agg_frames = grp_frames.agg({
+            'res_f_score': 'mean',
+            'file_path': 'first'
+        })
+        best_frame = grp_frames.get_group(agg_frames['res_f_score'].idxmax())
 
-        data_unsu.loc[i] = [model.replace('_', '-'), 100*cat_frames['res_f_valid'][0], 100*cat_frames['res_f_unique'][0], 100*cat_frames['res_f_novel'][0]]
-        # path_models[model] = list(best_frame['file_path'])
-
-    # with open(f'{file_unsu}.json', 'w') as f:
-    #     json.dump(pth_datasets, f, indent=4)
+        data_unsu.loc[i] = [model.replace('_', '-'), 100*best_frame['res_f_valid'].mean(), 100*best_frame['res_f_unique'].mean(), 100*best_frame['res_f_novel'].mean(), 100*best_frame['res_f_score'].mean()]
 
     return data_unsu
 
 
 if __name__ == "__main__":
-    checkpoint_dir = 'results/training/model_checkpoint/'
-    evaluation_dir = 'results/training/model_evaluation/'
-    hyperparam_dir = 'results/training/model_outputlogs/'
-    bestmodels_dir = 'results/training/'
+    checkpoint_dir = 'results/gridsearch/model_checkpoint/'
+    evaluation_dir = 'results/gridsearch/model_evaluation/'
+    hyperparam_dir = 'results/gridsearch/model_outputlogs/'
+    bestmodels_dir = 'results/gridsearch/'
 
-    names_models   = graphspn.MODELS.keys()
+    names_models   = [name for name in graphspn.MODELS.keys() if name not in ['graphspn_naive_deq_b', 'graphspn_naive_deq_h']]
 
     baselines = baseline_models_qm9()
+    
     ourmodels = find_best_models('qm9', names_models, evaluation_dir, bestmodels_dir)
-    allmodels = pd.concat([baselines, ourmodels], ignore_index=True)
+    baselines['score'] = baselines.apply(lambda row: row['validity']*row['uniqueness']*row['novelty']/10000, axis=1)
 
-    allmodels['score'] = allmodels.apply(lambda row: row['validity']*row['uniqueness']*row['novelty']/10000, axis=1)
+    allmodels = pd.concat([baselines, ourmodels], ignore_index=True)
 
     latexify_style(allmodels, 'qm9.tab', column_names=COLUMN_DISPLAY_NAMES + ['Score'])
     latexify_table('qm9.tab', 'qm9')
