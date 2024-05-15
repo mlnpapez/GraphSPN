@@ -175,7 +175,7 @@ def download_zinc250k(ohe=False, dir='data/molecular/'):
     print('Done.')
 
 
-def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=False, num_max_atoms=None, dir='data/molecular/'):
+def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_size=10000, ohe=False, num_max_atoms=None, split=True, dir='data/molecular/'):
     if ohe == True:
         x = MolecularDataset(torch.load(f'{dir}{dataset}_ohe.pt'))
     else:
@@ -191,21 +191,27 @@ def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_siz
         # print(val_size, tst_size)
         # print(prev_len, len(x))
 
-    x_trn, x_val, x_tst = x.split(val_size, tst_size, seed)
+    if split == True:
+        x_trn, x_val, x_tst = x.split(val_size, tst_size, seed)
 
-    if raw == True:
-        return x_trn, x_val, x_tst
+        if raw == True:
+            return x_trn, x_val, x_tst
+        else:
+            loader_trn = loader_wrapper(x_trn, batch_size, True)
+            loader_val = loader_wrapper(x_val, batch_size, False)
+            loader_tst = loader_wrapper(x_tst, batch_size, False)
+
+            return loader_trn, loader_val, loader_tst
     else:
-        loader_trn = loader_wrapper(x_trn, batch_size, True)
-        loader_val = loader_wrapper(x_val, batch_size, False)
-        loader_tst = loader_wrapper(x_tst, batch_size, False)
-
-        return loader_trn, loader_val, loader_tst
+        if raw == True:
+            return x
+        else:
+            return loader_wrapper(x, batch_size, True)
 
 
 if __name__ == '__main__':
-    ohe = True
-    download = False
+    ohe = False
+    download = True
     dataset = 'zinc250k'
     if download:
         if dataset == 'qm9':
