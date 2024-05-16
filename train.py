@@ -4,11 +4,12 @@ import utils
 import datasets
 import graphspn
 import graphspn_zero
+import graphspn_marg
 
 from rdkit import RDLogger
 
 
-MODELS = {**graphspn.MODELS, **graphspn_zero.MODELS}
+MODELS = {**graphspn.MODELS, **graphspn_zero.MODELS, **graphspn_marg.MODELS}
 
 
 if __name__ == '__main__':
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     RDLogger.DisableLog('rdApp.*')
 
     dataset = 'qm9'
-    models = ['graphspn_zero_none'] # MODELS.keys()
+    models = ['graphspn_marg_none'] # MODELS.keys()
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
