@@ -16,6 +16,7 @@ IGNORED_HYPERPARS = [
     'atom_list'
 ]
 
+VALENCY_LIST = {6:4, 7:3, 8:2, 9:1, 15:3, 16:2, 17:1, 35:1, 53:1}
 
 def flatten_dict(d, input_key=''):
     if isinstance(d, dict):
@@ -90,6 +91,43 @@ def isvalid(mol):
         return True
     else:
         return False
+
+def create_mols(x, a, atom_list):
+    nd_nodes = x.size(1)
+    mols = []
+    smls = []
+    for x, a in zip(x, a):
+        rw_mol = Chem.RWMol()
+
+        for i in range(nd_nodes):
+            if x[i].item() < len(atom_list):
+                rw_mol.AddAtom(Chem.Atom(atom_decoder(atom_list)[x[i].item()]))
+
+        num_atoms = rw_mol.GetNumAtoms()
+
+        for i in range(num_atoms):
+            for j in range(num_atoms):
+                if a[i, j].item() < 3 and i > j:
+                    rw_mol.AddBond(i, j, bond_decoder[a[i, j].item()])
+
+                    flag, valence = valency(rw_mol)
+                    if flag:
+                        continue
+                    else:
+                        assert len(valence) == 2
+                        k = valence[0]
+                        v = valence[1]
+                        atomic_number = rw_mol.GetAtomWithIdx(k).GetAtomicNum()
+                        if atomic_number in (7, 8, 16) and (v - VALENCY_LIST[atomic_number]) == 1:
+                            rw_mol.GetAtomWithIdx(k).SetFormalCharge(1)
+
+        rw_mol = radical_electrons_to_hydrogens(rw_mol)
+
+        mols.append(rw_mol)
+        smls.append(Chem.MolToSmiles(rw_mol))
+
+    return mols, smls
+
 
 def evaluate_molecules(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, debug=False, correct_mols=False, metrics_only=False, affix=''):
     num_mols = len(mols)
@@ -191,32 +229,65 @@ def run_epoch(model, loader, optimizer=[], verbose=False):
 
     return (nll_sum / len(loader.dataset)).item()
 
-def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_dir, num_nonimproving_epochs=30, verbose=False):
+METRIC_TYPES = ['valid', 'unique', 'novel', 'score']
+
+def train(model,
+          loader_trn,
+          loader_val,
+          smiles_trn,
+          hyperpars,
+          checkpoint_dir,
+          trainepoch_dir,
+          num_nonimproving_epochs=30,
+          verbose=False,
+          metric_type='valid'
+    ):
     optimizer = optim.Adam(model.parameters(), **hyperpars['optimizer_hyperpars'])
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
  
     lookahead_counter = num_nonimproving_epochs
-    best_nll_val = 1e6
+    if metric_type in METRIC_TYPES:
+        best_metric = 0e0
+    else:
+        best_metric = 1e6
     best_model_path = None
+    save_model = False
 
     for epoch in range(hyperpars['num_epochs']):
         model.train()
         nll_trn = run_epoch(model, loader_trn, verbose=verbose, optimizer=optimizer)
         scheduler.step()
-
         model.eval()
-        nll_val = run_epoch(model, loader_val, verbose=verbose)
 
-        dir = trainepoch_dir + f'{hyperpars["dataset"]}/{hyperpars["model"]}/'
-        if os.path.isdir(dir) != True:
-            os.makedirs(dir)
+        molecules_sam, smiles_sam = model.sample(200)
+        metrics = evaluate_molecules(molecules_sam, smiles_sam, smiles_trn, 200, metrics_only=True)
+        metrics_str = f'valid={metrics["valid"]:.2f}, unique={metrics["unique"]:.2f}, novel={metrics["novel"]:.2f}, score={metrics["score"]:.2f}'
 
-        print(f'epoch {epoch:3d}: ll_trn={-nll_trn:.4f}, ll_val={-nll_val:.4f}')
+        if metric_type in METRIC_TYPES:
+            metric = metrics[metric_type]
+            print(f'epoch {epoch:3d}: ll_trn={-nll_trn:.4f}, ' + metrics_str)
 
-        if nll_val < best_nll_val:
-            best_nll_val = nll_val
-            lookahead_counter = num_nonimproving_epochs
+            if metric > best_metric:
+                best_metric = metric
+                lookahead_counter = num_nonimproving_epochs
+                save_model = True
+            else:
+                lookahead_counter -= 1
+        else:
+            metric = run_epoch(model, loader_val, verbose=verbose)
+            print(f'epoch {epoch:3d}: ll_trn={-nll_trn:.4f}, ll_val={-metric:.4f}, ' + metrics_str)
 
+            if metric < best_metric:
+                best_metric = metric
+                lookahead_counter = num_nonimproving_epochs
+                save_model = True
+            else:
+                lookahead_counter -= 1
+
+        if lookahead_counter == 0:
+            break
+
+        if save_model == True:
             dir = checkpoint_dir + f'{hyperpars["dataset"]}/{hyperpars["model"]}/'
 
             if os.path.isdir(dir) != True:
@@ -226,20 +297,12 @@ def train(model, loader_trn, loader_val, hyperpars, checkpoint_dir, trainepoch_d
             path = dir + dict2str(flatten_dict(hyperpars)) + '.pt'
             torch.save(model, path)
             best_model_path = path
-        else:
-            lookahead_counter -= 1
-
-        if lookahead_counter == 0:
-            break
+            save_model == False
 
     return best_model_path
 
-def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, evaluation_dir, num_samples=1000):
+def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, evaluation_dir, num_samples=1000, compute_nll=True):
     model.eval()
-
-    # nll_trn_approx = run_epoch(model, loader_trn)
-    nll_val_approx = run_epoch(model, loader_val)
-    nll_tst_approx = run_epoch(model, loader_tst)
 
     molecules_sam, smiles_sam = model.sample(num_samples)
     molecules_res, smiles_res = resample_invalid_mols(model, num_samples)
@@ -247,11 +310,19 @@ def evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, e
     molecules_res_f, _, metrics_resample_f = evaluate_molecules(molecules_sam, smiles_sam, smiles_trn, num_samples, correct_mols=False, affix='res_f_')
     molecules_res_t, _, metrics_resample_t = evaluate_molecules(molecules_res, smiles_res, smiles_trn, num_samples, correct_mols=False, affix='res_t_')
     molecules_cor_t, _, metrics_correction = evaluate_molecules(molecules_sam, smiles_res, smiles_trn, num_samples, correct_mols=True,  affix='cor_t_')
-    metrics_neglogliks = {
-        # 'nll_trn_approx': nll_trn_approx,
-        'nll_val_approx': nll_val_approx,
-        'nll_tst_approx': nll_tst_approx
-    }
+
+    if compute_nll == True:
+        nll_trn_approx = run_epoch(model, loader_trn)
+        nll_val_approx = run_epoch(model, loader_val)
+        nll_tst_approx = run_epoch(model, loader_tst)
+        metrics_neglogliks = {
+            'nll_trn_approx': nll_trn_approx,
+            'nll_val_approx': nll_val_approx,
+            'nll_tst_approx': nll_tst_approx
+        }
+    else:
+        metrics_neglogliks = {}
+
     metrics = {**metrics_resample_f, **metrics_resample_t, **metrics_correction, **metrics_neglogliks, "num_params": count_parameters(model)}
 
     dir = evaluation_dir + f'metrics/{hyperpars["dataset"]}/{hyperpars["model"]}/'

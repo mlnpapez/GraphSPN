@@ -34,7 +34,7 @@ def unsupervised(dataset, name, par_buffer):
     print(model)
     print(f'The number of parameters is {utils.count_parameters(model)}.')
 
-    path = utils.train(model, loader_trn, loader_val, hyperpars, CHECKPOINT_DIR, TRAINEPOCH_DIR, verbose=True)
+    path = utils.train(model, loader_trn, loader_val, smiles_trn, hyperpars, CHECKPOINT_DIR, TRAINEPOCH_DIR, verbose=True)
     model = torch.load(path)
     metric = utils.evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, EVALUATION_DIR)
 
