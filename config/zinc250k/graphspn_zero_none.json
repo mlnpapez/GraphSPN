@@ -1,19 +1,24 @@
 {
-    "dataset": "qm9",
-    "model": "graphspn_naive_cat_e",
+    "dataset": "zinc250k",
+    "model": "graphspn_zero_none",
     "model_hyperpars": {
-        "nd_n": 9,
-        "nk_n": 5,
+        "nd_n": 38,
+        "nk_n": 10,
         "nk_e": 4,
-        "nl": 3,
-        "nr": 100,
-        "ns": 20,
-        "ni": 20,
+        "nl": 2,
+        "nr": 20,
+        "ns": 40,
+        "ni": 40,
         "atom_list": [
             6,
             7,
             8,
-            9
+            9,
+            15,
+            16,
+            17,
+            35,
+            53
         ],
         "device": "cuda"
     },
@@ -25,7 +30,7 @@
             0.82
         ]
     },
-    "num_epochs": 25,
+    "num_epochs": 20,
     "batch_size": 1000,
     "seed": 0
 }

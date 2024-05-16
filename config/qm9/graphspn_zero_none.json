@@ -1,12 +1,12 @@
 {
     "dataset": "qm9",
-    "model": "graphspn_naive_cat_e",
+    "model": "graphspn_zero_none",
     "model_hyperpars": {
         "nd_n": 9,
         "nk_n": 5,
         "nk_e": 4,
-        "nl": 3,
-        "nr": 100,
+        "nl": 2,
+        "nr": 10,
         "ns": 20,
         "ni": 20,
         "atom_list": [
@@ -25,7 +25,7 @@
             0.82
         ]
     },
-    "num_epochs": 25,
+    "num_epochs": 100,
     "batch_size": 1000,
     "seed": 0
 }
