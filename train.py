@@ -3,13 +3,12 @@ import torch
 import utils
 import datasets
 import graphspn
-# import graphspn_zero
+import graphspn_zero
 
 from rdkit import RDLogger
 
 
-# MODELS = {**graphspn.MODELS, **graphspn_zero.MODELS}
-MODELS = {**graphspn.MODELS}
+MODELS = {**graphspn.MODELS, **graphspn_zero.MODELS}
 
 
 if __name__ == '__main__':

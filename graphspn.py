@@ -6,47 +6,7 @@ import datasets
 from abc import abstractmethod
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
 from torch.distributions import Categorical
-from rdkit import Chem
 from utils import *
-
-VALENCY_LIST = {6:4, 7:3, 8:2, 9:1, 15:3, 16:2, 17:1, 35:1, 53:1}
-
-
-def create_mols(x, a, atom_list):
-    nd_nodes = x.size(1)
-    mols = []
-    smls = []
-    for x, a in zip(x, a):
-        rw_mol = Chem.RWMol()
-
-        for i in range(nd_nodes):
-            if x[i].item() < 4:
-                rw_mol.AddAtom(Chem.Atom(atom_decoder(atom_list)[x[i].item()]))
-
-        num_atoms = rw_mol.GetNumAtoms()
-
-        for i in range(num_atoms):
-            for j in range(num_atoms):
-                if a[i, j].item() < 3 and i > j:
-                    rw_mol.AddBond(i, j, bond_decoder[a[i, j].item()])
-
-                    flag, valence = valency(rw_mol)
-                    if flag:
-                        continue
-                    else:
-                        assert len(valence) == 2
-                        k = valence[0]
-                        v = valence[1]
-                        atomic_number = rw_mol.GetAtomWithIdx(k).GetAtomicNum()
-                        if atomic_number in (7, 8, 16) and (v - VALENCY_LIST[atomic_number]) == 1:
-                            rw_mol.GetAtomWithIdx(k).SetFormalCharge(1)
-
-        rw_mol = radical_electrons_to_hydrogens(rw_mol)
-
-        mols.append(rw_mol)
-        smls.append(Chem.MolToSmiles(rw_mol))
-
-    return mols, smls
 
 
 class GraphSPNNaiveCore(nn.Module):
@@ -431,7 +391,7 @@ class GraphSPNNaiveCatE(nn.Module):
         self.to(device)
 
     def forward(self, x):
-        z = torch.cat((x['x'].unsqueeze(1).to(self.device), x['a'].to(self.device)), dim=1)
+        z = torch.cat((x['x'].unsqueeze(1), x['a']), dim=1)
         z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
         return self.network(z)
 
@@ -443,7 +403,7 @@ class GraphSPNNaiveCatE(nn.Module):
 
         z = z.view(-1, self.nd_nodes+1, self.nd_nodes)
         x = z[:, 0 , :]
-        a = z[:, 0:, :]
+        a = z[:, 1:, :]
 
         return create_mols(x, a, self.atom_list)
 
@@ -489,7 +449,7 @@ class GraphSPNNaiveCatF(nn.Module):
 
         z = z.view(-1, self.nd_nodes+1, self.nd_nodes)
         x = z[:, 0 , :]
-        a = z[:, 0:, :]
+        a = z[:, 1:, :]
 
         return create_mols(x, a, self.atom_list)
 
