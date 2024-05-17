@@ -2,7 +2,7 @@
     "dataset": "zinc250k",
     "model": "graphspn_naive_deq_d",
     "model_hyperpars": {
-        "nc": 10,
+        "nc": 1,
         "nd_n": 38,
         "nk_n": 10,
         "nk_e": 4,
@@ -10,12 +10,12 @@
         "nl_e": 2,
         "nr_n": 10,
         "nr_e": 10,
-        "ns_n": 10,
-        "ns_e": 10,
-        "ni_n": 5,
-        "ni_e": 5,
-        "dc_n": 0.1,
-        "dc_e": 0.1,
+        "ns_n": 30,
+        "ns_e": 30,
+        "ni_n": 30,
+        "ni_e": 30,
+        "dc_n": 0.7,
+        "dc_e": 0.7,
         "atom_list": [
             6,
             7,
@@ -37,7 +37,7 @@
             0.82
         ]
     },
-    "num_epochs": 2,
+    "num_epochs": 20,
     "batch_size": 1000,
     "seed": 0
 }

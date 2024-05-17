@@ -127,7 +127,30 @@ class GraphSPNMargFull(GraphSPNMargCore):
             l += (torch.exp(self.network(z).squeeze() - torch.log(n)))
         return torch.log(l)
 
+
+class GraphSPNMargRand(GraphSPNMargCore):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, np, atom_list, device='cuda'):
+        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
+
+        self.num_perms = np
+        self.permutations = {i:torch.stack([torch.randperm(i) for _ in range(min(np, math.factorial(i)))]) for i in range(nd_n)}
+
+    def _forward(self, xx, aa, num_full):
+        l = torch.zeros(len(xx), min(self.num_perms, math.factorial(num_full)), device=self.device)
+        for i, pi in enumerate(self.permutations[num_full-1]):
+            pi = torch.cat((pi, torch.arange(num_full-1, self.nd_nodes)))
+            xx = xx[:, pi]
+            aa = aa[:, pi, :]
+            aa = aa[:, :, pi]
+            z = torch.cat((xx.unsqueeze(2), aa), dim=2)
+            z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
+            l[:, i] = self.network(z).squeeze()
+        return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
+
+
+
 MODELS = {
     'graphspn_marg_none': GraphSPNMargNone,
     'graphspn_marg_full': GraphSPNMargFull,
+    'graphspn_marg_rand': GraphSPNMargRand,
 }
