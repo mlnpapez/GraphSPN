@@ -108,6 +108,26 @@ class GraphSPNMargNone(GraphSPNMargCore):
         z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
         return self.network(z)
 
+
+class GraphSPNMargFull(GraphSPNMargCore):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
+        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
+
+    def _forward(self, xx, aa, num_full):
+        n = torch.tensor(math.factorial(num_full))
+        l = torch.zeros(len(xx), device=self.device)
+        for i, pi in enumerate(itertools.permutations(range(num_full), num_full)):
+            r = torch.arange(num_full, self.nd_nodes)
+            pi = torch.cat((torch.tensor(pi), r))
+            xx = xx[:, pi]
+            aa = aa[:, pi, :]
+            aa = aa[:, :, pi]
+            z = torch.cat((xx.unsqueeze(2), aa), dim=2)
+            z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
+            l += (torch.exp(self.network(z).squeeze() - torch.log(n)))
+        return torch.log(l)
+
 MODELS = {
     'graphspn_marg_none': GraphSPNMargNone,
+    'graphspn_marg_full': GraphSPNMargFull,
 }
