@@ -17,7 +17,7 @@ if __name__ == '__main__':
     RDLogger.DisableLog('rdApp.*')
 
     dataset = 'qm9'
-    models = ['graphspn_marg_sort'] # MODELS.keys()
+    models = ['graphspn_marg_kary'] # MODELS.keys()
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
