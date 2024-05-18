@@ -117,11 +117,12 @@ class GraphSPNMargFull(GraphSPNMargCore):
         n = torch.tensor(math.factorial(num_full))
         l = torch.zeros(len(xx), device=self.device)
         for i, pi in enumerate(itertools.permutations(range(num_full), num_full)):
-            r = torch.arange(num_full, self.nd_nodes)
-            pi = torch.cat((torch.tensor(pi), r))
-            xx = xx[:, pi]
-            aa = aa[:, pi, :]
-            aa = aa[:, :, pi]
+            with torch.no_grad():
+                r = torch.arange(num_full, self.nd_nodes)
+                pi = torch.cat((torch.tensor(pi), r))
+                xx = xx[:, pi]
+                aa = aa[:, pi, :]
+                aa = aa[:, :, pi]
             z = torch.cat((xx.unsqueeze(2), aa), dim=2)
             z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
             l += (torch.exp(self.network(z).squeeze() - torch.log(n)))
@@ -138,19 +139,36 @@ class GraphSPNMargRand(GraphSPNMargCore):
     def _forward(self, xx, aa, num_full):
         l = torch.zeros(len(xx), min(self.num_perms, math.factorial(num_full)), device=self.device)
         for i, pi in enumerate(self.permutations[num_full-1]):
-            pi = torch.cat((pi, torch.arange(num_full-1, self.nd_nodes)))
-            xx = xx[:, pi]
-            aa = aa[:, pi, :]
-            aa = aa[:, :, pi]
+            with torch.no_grad():
+                pi = torch.cat((pi, torch.arange(num_full-1, self.nd_nodes)))
+                xx = xx[:, pi]
+                aa = aa[:, pi, :]
+                aa = aa[:, :, pi]
             z = torch.cat((xx.unsqueeze(2), aa), dim=2)
             z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
             l[:, i] = self.network(z).squeeze()
         return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
 
 
+class GraphSPNMargSort(GraphSPNMargCore):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
+        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
+
+    def _forward(self, xx, aa, num_full):
+        with torch.no_grad():
+            xx, pi = xx.sort(dim=1)
+            pi = torch.cat((pi[:, :num_full], torch.arange(num_full, self.nd_nodes).repeat(len(xx), 1)), dim=1)
+            for i, p in enumerate(pi):
+                aa[i, :, :] = aa[i, p, :]
+                aa[i, :, :] = aa[i, :, p]
+        z = torch.cat((xx.unsqueeze(2), aa), dim=2)
+        z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
+        return self.network(z)
+
 
 MODELS = {
     'graphspn_marg_none': GraphSPNMargNone,
     'graphspn_marg_full': GraphSPNMargFull,
     'graphspn_marg_rand': GraphSPNMargRand,
+    'graphspn_marg_sort': GraphSPNMargSort,
 }

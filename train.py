@@ -16,8 +16,8 @@ if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
     RDLogger.DisableLog('rdApp.*')
 
-    dataset = 'zinc250k'
-    models = ['graphspn_naive_deq_d'] # MODELS.keys()
+    dataset = 'qm9'
+    models = ['graphspn_marg_sort'] # MODELS.keys()
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'

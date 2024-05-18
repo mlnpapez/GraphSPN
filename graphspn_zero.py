@@ -97,6 +97,6 @@ class GraphSPNZeroFree(nn.Module):
         return create_mols(x, a, self.atom_list)
 
 MODELS = {
-    'graphspn_zero_sens': GraphSPNZeroNone,
+    'graphspn_zero_none': GraphSPNZeroNone,
     'graphspn_zero_free': GraphSPNZeroFree,
 }
