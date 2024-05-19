@@ -26,6 +26,6 @@
         ]
     },
     "num_epochs": 20,
-    "batch_size": 1000,
+    "batch_size": 10,
     "seed": 0
 }

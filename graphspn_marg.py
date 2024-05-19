@@ -1,5 +1,4 @@
 import math
-from numpy import arange
 import torch
 import torch.nn as nn
 import itertools
@@ -8,6 +7,7 @@ from abc import abstractmethod
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
 from torch.distributions import Poisson
 from utils import *
+from tqdm import tqdm
 
 
 def marginalize(network, nd_nodes, num_empty, num_full):
@@ -25,6 +25,22 @@ def marginalize(network, nd_nodes, num_empty, num_full):
         else:
             network.set_marginalization_idx(None)
 
+def permute_graph(xx, aa, pi):
+    px = xx[:, pi]
+    pa = aa[:, pi, :]
+    pa = pa[:, :, pi]
+    return px, pa
+
+def flatten_graph(xx, aa, dim=2):
+    n = xx.shape[1]
+    z = torch.cat((xx.unsqueeze(dim), aa), dim=dim)
+    return z.view(-1, n + n**2)
+
+def unflatt_graph(z, nd_nodes, num_full):
+    z = z.view(-1, nd_nodes, nd_nodes+1)
+    x = z[:, 0:num_full, 0 ]
+    a = z[:, 0:num_full, 1:num_full+1]
+    return x, a
 
 class GraphSPNMargCore(nn.Module):
     def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
@@ -91,9 +107,7 @@ class GraphSPNMargCore(nn.Module):
 
             z = self.network.sample(num_samples).to(torch.int).cpu()
 
-            z = z.view(-1, self.nd_nodes, self.nd_nodes+1)
-            x = z[:, 0:num_full, 0 ]
-            a = z[:, 0:num_full, 1:num_full+1]
+            x, a = unflatt_graph(z, self.nd_nodes, num_full)
 
             _mols, _smls = create_mols(x, a, self.atom_list)
             mols.extend(_mols)
@@ -107,9 +121,8 @@ class GraphSPNMargNone(GraphSPNMargCore):
         super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
 
     def _forward(self, xx, aa, num_full):
-        z = torch.cat((xx.unsqueeze(2), aa), dim=2)
-        z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
-        return self.network(z)
+        z = flatten_graph(xx, aa)
+        return self.network(z.to(self.device))
 
 
 class GraphSPNMargFull(GraphSPNMargCore):
@@ -119,15 +132,12 @@ class GraphSPNMargFull(GraphSPNMargCore):
     def _forward(self, xx, aa, num_full):
         n = torch.tensor(math.factorial(num_full))
         l = torch.zeros(len(xx), device=self.device)
-        for pi in itertools.permutations(range(num_full), num_full):
+        for pi in tqdm(itertools.permutations(range(num_full), num_full), leave=False):
             with torch.no_grad():
                 pi = torch.cat((torch.tensor(pi), torch.arange(num_full, self.nd_nodes)))
-                xx = xx[:, pi]
-                aa = aa[:, pi, :]
-                aa = aa[:, :, pi]
-            z = torch.cat((xx.unsqueeze(2), aa), dim=2)
-            z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
-            l += (torch.exp(self.network(z).squeeze() - torch.log(n)))
+                px, pa = permute_graph(xx, aa, pi)
+            z = flatten_graph(px, pa)
+            l += (torch.exp(self.network(z.to(self.device)).squeeze() - torch.log(n)))
         return torch.log(l)
 
 
@@ -143,12 +153,9 @@ class GraphSPNMargRand(GraphSPNMargCore):
         for i, pi in enumerate(self.permutations[num_full-1]):
             with torch.no_grad():
                 pi = torch.cat((pi, torch.arange(num_full-1, self.nd_nodes)))
-                xx = xx[:, pi]
-                aa = aa[:, pi, :]
-                aa = aa[:, :, pi]
-            z = torch.cat((xx.unsqueeze(2), aa), dim=2)
-            z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
-            l[:, i] = self.network(z).squeeze()
+                px, pa = permute_graph(xx, aa, pi)
+            z = flatten_graph(px, pa)
+            l[:, i] = self.network(z.to(self.device)).squeeze()
         return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
 
 
@@ -163,9 +170,8 @@ class GraphSPNMargSort(GraphSPNMargCore):
             for i, p in enumerate(pi):
                 aa[i, :, :] = aa[i, p, :]
                 aa[i, :, :] = aa[i, :, p]
-        z = torch.cat((xx.unsqueeze(2), aa), dim=2)
-        z = z.view(-1, self.nd_nodes + self.nd_edges).to(self.device)
-        return self.network(z)
+        z = flatten_graph(xx, aa)
+        return self.network(z.to(self.device))
 
 
 class GraphSPNMargkAry(nn.Module):
@@ -205,32 +211,28 @@ class GraphSPNMargkAry(nn.Module):
         c = torch.count_nonzero(x['x'] == len(self.atom_list), dim=1)
         for num_empty in torch.unique(c):
             num_full = self.nd_nodes-num_empty.item()
+            self.network.set_marginalization_idx(None) # TODO: propagate to the rest
+
             xx = x['x'][c == num_empty]
             aa = x['a'][c == num_empty]
-            self.network.set_marginalization_idx(None) # TODO: propagate to the rest
+
             if num_full >= self.arity:
                 n = math.comb(num_full, self.arity)
                 l = torch.zeros(len(xx), n, device=self.device)
                 for i, pi in enumerate(itertools.combinations(range(num_full), self.arity)):
                     with torch.no_grad():
-                        _x = xx[:, pi]
-                        _a = aa[:, pi, :]
-                        _a = _a[:, :, pi]
-                    z = torch.cat((_x.unsqueeze(2), _a), dim=2)
-                    z = z.view(-1, self.arity + self.arity**2).to(self.device)
-                    l[:, i] = self.network(z).squeeze()
+                        px, pa = permute_graph(xx, aa, pi)
+                    z = flatten_graph(px, pa)
+                    l[:, i] = self.network(z.to(self.device)).squeeze()
             else:
                 n = 1
                 l = torch.zeros(len(xx), n, device=self.device)
                 marginalize(self.network, self.arity, num_empty, num_full)
                 with torch.no_grad():
                     pi = torch.arange(self.arity)
-                    _x = xx[:, pi]
-                    _a = aa[:, pi, :]
-                    _a = _a[:, :, pi]
-                z = torch.cat((_x.unsqueeze(2), _a), dim=2)
-                z = z.view(-1, self.arity + self.arity**2).to(self.device)
-                l[:, 0] = self.network(z).squeeze()
+                    px, pa = permute_graph(xx, aa, pi)
+                z = flatten_graph(px, pa)
+                l[:, 0] = self.network(z.to(self.device)).squeeze()
 
             o.append(torch.logsumexp(l, dim=1) - torch.log(torch.tensor(n)))
 
@@ -258,9 +260,8 @@ class GraphSPNMargkAry(nn.Module):
 
             if num_full >= self.arity:
                 n = math.comb(num_full, self.arity)
-                s = torch.randint(n, (num_sub_graphs,)).tolist()
                 sub_graphs = list(itertools.combinations(range(num_full), self.arity))
-                sub_graphs = [sub_graphs[i] for i in s]
+                sub_graphs = [sub_graphs[i] for i in torch.randint(n, (num_sub_graphs,)).tolist()]
 
                 z = self.network.sample(num_sub_graphs*num_samples).to(torch.int).cpu()
                 z = z.view(num_sub_graphs, num_samples, self.arity, self.arity+1)
@@ -274,10 +275,8 @@ class GraphSPNMargkAry(nn.Module):
                 marginalize(self.network, self.nd_nodes, num_empty, num_full)
 
                 z = self.network.sample(num_samples).to(torch.int).cpu()
-                z = z.view(-1, self.arity, self.arity+1)
 
-                x[:, 0:num_full] = z[:, 0:num_full, 0 ]
-                a[:, 0:num_full, 0:num_full] = z[:, 0:num_full, 1:num_full+1]
+                x[:, 0:num_full], a[:, 0:num_full, 0:num_full] = unflatt_graph(z, self.arity, num_full)
 
             _mols, _smls = create_mols(x, a, self.atom_list)
             mols.extend(_mols)
