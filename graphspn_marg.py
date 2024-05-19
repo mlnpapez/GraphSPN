@@ -244,6 +244,7 @@ class GraphSPNMargkAry(nn.Module):
         return self(x).mean()
 
     def sample(self, num_samples):
+        num_sub_graphs = 20
         mols = []
         smls = []
         d = Poisson(self.rate.exp())
@@ -251,23 +252,32 @@ class GraphSPNMargkAry(nn.Module):
         for num_empty, num_samples in zip(*torch.unique(c, return_counts=True)):
             num_full = self.nd_nodes-num_empty.item()
             self.network.set_marginalization_idx(None) # TODO: propagate to the rest
-            if num_full >= self.arity:
-                n = math.comb(num_full, self.arity)
-                s = torch.randint(n, (1,))
-                sub_graph = list(itertools.combinations(range(num_full), self.arity))[s]
-            else:
-                marginalize(self.network, self.nd_nodes, num_empty, num_full)
-                sub_graph = torch.arange(num_full)
 
             x = torch.randint(0, self.nk_nodes, (num_samples, num_full),           dtype=torch.int)
             a = torch.randint(0, self.nk_edges, (num_samples, num_full, num_full), dtype=torch.int)
-            z = self.network.sample(num_samples).to(torch.int).cpu()
 
-            z = z.view(-1, self.arity, self.arity+1)
-            for i in range(min(self.arity, num_full)):
-                x[:, sub_graph[i]] = z[:, i, 0]
-                for j in range(min(self.arity, num_full)):
-                    a[:, sub_graph[i], sub_graph[j]] = z[:, i, j+1]
+            if num_full >= self.arity:
+                n = math.comb(num_full, self.arity)
+                s = torch.randint(n, (num_sub_graphs,)).tolist()
+                sub_graphs = list(itertools.combinations(range(num_full), self.arity))
+                sub_graphs = [sub_graphs[i] for i in s]
+
+                z = self.network.sample(num_sub_graphs*num_samples).to(torch.int).cpu()
+                z = z.view(num_sub_graphs, num_samples, self.arity, self.arity+1)
+
+                for g in range(num_sub_graphs):
+                    for i in range(min(self.arity, num_full)):
+                        x[:, sub_graphs[g][i]] = z[g, :, i, 0]
+                        for j in range(min(self.arity, num_full)):
+                            a[:, sub_graphs[g][i], sub_graphs[g][j]] = z[g, :, i, j+1]
+            else:
+                marginalize(self.network, self.nd_nodes, num_empty, num_full)
+
+                z = self.network.sample(num_samples).to(torch.int).cpu()
+                z = z.view(-1, self.arity, self.arity+1)
+
+                x[:, 0:num_full] = z[:, 0:num_full, 0 ]
+                a[:, 0:num_full, 0:num_full] = z[:, 0:num_full, 1:num_full+1]
 
             _mols, _smls = create_mols(x, a, self.atom_list)
             mols.extend(_mols)
