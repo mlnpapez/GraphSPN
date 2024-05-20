@@ -3,6 +3,8 @@ import itertools
 from datasets import MOLECULAR_DATASETS
 from templates_hyperpars import *
 
+LINE = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
+NL = 2
 
 def grid_naive_cat_a(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
@@ -185,6 +187,22 @@ def grid_naive_deq_h(dataset, num_max_atoms=None):
     return [template_naive_deq_h(*dataset.values(), *p) for p in list(grid)]
 
 
+def line_zero_none(dataset):
+    return [template_zero_none(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+
+
+def line_marg_none(dataset):
+    return [template_marg_none(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_marg_full(dataset):
+    return [template_marg_full(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_marg_rand(dataset):
+    return [template_marg_rand(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_marg_sort(dataset):
+    return [template_marg_sort(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_marg_kary(dataset):
+    return [template_marg_kary(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+
+
 GRIDS = {
     'graphspn_naive_cat_a': grid_naive_cat_a,
     'graphspn_naive_cat_b': grid_naive_cat_b,
@@ -194,11 +212,20 @@ GRIDS = {
     'graphspn_naive_cat_f': grid_naive_cat_f,
     'graphspn_naive_cat_g': grid_naive_cat_g,
     'graphspn_naive_cat_h': grid_naive_cat_h,
+
     'graphspn_naive_deq_a': grid_naive_deq_a,
     'graphspn_naive_deq_b': grid_naive_deq_b,
     'graphspn_naive_deq_c': grid_naive_deq_c,
     'graphspn_naive_deq_d': grid_naive_deq_d,
     'graphspn_naive_deq_h': grid_naive_deq_b,
+
+    'graphspn_zero_none': line_zero_none,
+
+    'graphspn_marg_none': line_marg_none,
+    'graphspn_marg_full': line_marg_full,
+    'graphspn_marg_rand': line_marg_rand,
+    'graphspn_marg_sort': line_marg_sort,
+    'graphspn_marg_kary': line_marg_kary,
 }
 
 

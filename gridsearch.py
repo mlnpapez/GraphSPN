@@ -6,16 +6,23 @@ import utils
 import subprocess
 import gridsearch_hyperpars
 import graphspn
+import graphspn_zero
+import graphspn_marg
 import datasets
 
-CHECKPOINT_DIR = 'results/gridsearch/model_checkpoint/'
-TRAINEPOCH_DIR = 'results/gridsearch/model_trainepoch/'
-EVALUATION_DIR = 'results/gridsearch/model_evaluation/'
-OUTPUTLOGS_DIR = 'results/gridsearch/model_outputlogs/'
+from rdkit import RDLogger
+
+CHECKPOINT_DIR = 'results/linesearch/model_checkpoint/'
+TRAINEPOCH_DIR = 'results/linesearch/model_trainepoch/'
+EVALUATION_DIR = 'results/linesearch/model_evaluation/'
+OUTPUTLOGS_DIR = 'results/linesearch/model_outputlogs/'
+
+MODELS = {**graphspn_zero.MODELS, **graphspn_marg.MODELS}
 
 
 def unsupervised(dataset, name, par_buffer):
     torch.set_float32_matmul_precision('medium')
+    RDLogger.DisableLog('rdApp.*')
 
     hyperpars = par_buffer[int(os.environ["SLURM_ARRAY_TASK_ID"])]
 
@@ -27,7 +34,7 @@ def unsupervised(dataset, name, par_buffer):
     x_trn, _, _ = datasets.load_dataset(dataset, 0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
 
-    model = graphspn.MODELS[name](**hyperpars['model_hyperpars'])
+    model = MODELS[name](**hyperpars['model_hyperpars'])
 
     print(dataset)
     print(json.dumps(hyperpars, indent=4))
@@ -57,8 +64,9 @@ def submit_job(dataset, model, par_buffer, device, max_sub):
                 subprocess.run(['sbatch',
                                 f'--job-name={model.replace("graphspn_naive","")}',
                                 f'--output={outputlogs_dir}/{model}/%A_%a.out',
-                                '--partition=amdgpu',
+                                '--partition=amdgpufast',
                                 '--ntasks=1',
+                                '--mem-per-cpu=64000',
                                 f'--gres=gpu:1',
                                 f'--array=0-{len(par_buffer)-1}',
                                 f'--wrap={cmd_sbatch}'])
@@ -82,37 +90,34 @@ def submit_job(dataset, model, par_buffer, device, max_sub):
 
 
 if __name__ == "__main__":
-    max_jobs_to_submit = 25
     par_buffer = []
-    gpu_models = []
+    all_models = ['graphspn_marg_rand'] # [k for k in MODELS.keys() if k not in ['graphspn_marg_full']]
+    gpu_models = MODELS.keys()
 
-    run_maxjob = subprocess.run(['sacctmgr', 'show', 'qos', 'format=MaxJobsPU', 'where', 'collaborator', '-n'], capture_output=True)
-    max_job = int(run_maxjob.stdout)
-    max_sub = 500
+    for dataset, attributes in datasets.MOLECULAR_DATASETS.items():
+        print(dataset)
+        for model in all_models:
+            print(model)
+            if model in gpu_models:
+                device = 'cuda'
+                max_sub = 14
+                max_jobs_to_submit = 1
+            else:
+                device = 'cpu'
+                max_sub = 500
+                max_jobs_to_submit = 25
 
-    if max_jobs_to_submit < max_job:
-        for dataset, attributes in datasets.MOLECULAR_DATASETS.items():
-            print(dataset)
-            for model in graphspn.MODELS.keys():
-                print(model)
-                if model in gpu_models:
-                    device = 'cuda'
-                else:
-                    device = 'cpu'
+            for hyperpars in gridsearch_hyperpars.GRIDS[model](attributes):
+                hyperpars['model_hyperpars']['device'] = device
 
-                for hyperpars in gridsearch_hyperpars.GRIDS[model](attributes):
-                    hyperpars['model_hyperpars']['device'] = device
+                path = EVALUATION_DIR + f'metrics/{dataset}/{model}/' + utils.dict2str(utils.flatten_dict(hyperpars)) + '.csv'
+                if not os.path.isfile(path):
+                    par_buffer.append(hyperpars)
 
-                    path = EVALUATION_DIR + f'{dataset}/{model}/' + utils.dict2str(utils.flatten_dict(hyperpars)) + '.csv'
-                    if not os.path.isfile(path):
-                        par_buffer.append(hyperpars)
-
-                    if len(par_buffer) == max_jobs_to_submit:
-                        submit_job(dataset, model, par_buffer, device, max_sub)
-                        par_buffer = []
-
-                if len(par_buffer) > 1:
+                if len(par_buffer) == max_jobs_to_submit:
                     submit_job(dataset, model, par_buffer, device, max_sub)
                     par_buffer = []
-    else:
-        os.error('Too many jobs to submit in a single batch.')
+
+            if len(par_buffer) > 1:
+                submit_job(dataset, model, par_buffer, device, max_sub)
+                par_buffer = []
