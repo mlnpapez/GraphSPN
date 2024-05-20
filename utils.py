@@ -129,6 +129,39 @@ def create_mols(x, a, atom_list):
     return mols, smls
 
 
+def marginalize(network, nd_nodes, num_empty, num_full):
+    with torch.no_grad():
+        if num_empty > 0:
+            mx = torch.zeros(nd_nodes,           dtype=torch.bool)
+            ma = torch.zeros(nd_nodes, nd_nodes, dtype=torch.bool)
+            mx[num_full:   ] = True
+            ma[num_full:, :] = True
+            ma[:, num_full:] = True
+            m = torch.cat((mx.unsqueeze(1), ma), dim=1)
+            marginalization_idx = torch.arange(nd_nodes+nd_nodes**2)[m.view(-1)]
+
+            network.set_marginalization_idx(marginalization_idx)
+        else:
+            network.set_marginalization_idx(None)
+
+def permute_graph(xx, aa, pi):
+    px = xx[:, pi]
+    pa = aa[:, pi, :]
+    pa = pa[:, :, pi]
+    return px, pa
+
+def flatten_graph(xx, aa, dim=2):
+    n = xx.shape[1]
+    z = torch.cat((xx.unsqueeze(dim), aa), dim=dim)
+    return z.view(-1, n + n**2)
+
+def unflatt_graph(z, nd_nodes, num_full):
+    z = z.view(-1, nd_nodes, nd_nodes+1)
+    x = z[:, 0:num_full, 0 ]
+    a = z[:, 0:num_full, 1:num_full+1]
+    return x, a
+
+
 def evaluate_molecules(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique=True, debug=False, correct_mols=False, metrics_only=False, affix=''):
     num_mols = len(mols)
 
@@ -176,7 +209,6 @@ def evaluate_molecules(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique
         return metrics
     else:
         return mols_valid, smiles_valid, metrics
-
 
 def print_metrics(valid, novel, unique, score, novel_abs=[], unique_abs=[], abs=False):
     if abs == True:

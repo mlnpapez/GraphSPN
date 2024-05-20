@@ -1,6 +1,6 @@
 {
     "dataset": "qm9",
-    "model": "graphspn_zero_free",
+    "model": "graphspn_marg_free",
     "model_hyperpars": {
         "nd_n": 9,
         "nk_n": 5,

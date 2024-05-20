@@ -10,38 +10,6 @@ from utils import *
 from tqdm import tqdm
 
 
-def marginalize(network, nd_nodes, num_empty, num_full):
-    with torch.no_grad():
-        if num_empty > 0:
-            mx = torch.zeros(nd_nodes,           dtype=torch.bool)
-            ma = torch.zeros(nd_nodes, nd_nodes, dtype=torch.bool)
-            mx[num_full:   ] = True
-            ma[num_full:, :] = True
-            ma[:, num_full:] = True
-            m = torch.cat((mx.unsqueeze(1), ma), dim=1)
-            marginalization_idx = torch.arange(nd_nodes+nd_nodes**2)[m.view(-1)]
-
-            network.set_marginalization_idx(marginalization_idx)
-        else:
-            network.set_marginalization_idx(None)
-
-def permute_graph(xx, aa, pi):
-    px = xx[:, pi]
-    pa = aa[:, pi, :]
-    pa = pa[:, :, pi]
-    return px, pa
-
-def flatten_graph(xx, aa, dim=2):
-    n = xx.shape[1]
-    z = torch.cat((xx.unsqueeze(dim), aa), dim=dim)
-    return z.view(-1, n + n**2)
-
-def unflatt_graph(z, nd_nodes, num_full):
-    z = z.view(-1, nd_nodes, nd_nodes+1)
-    x = z[:, 0:num_full, 0 ]
-    a = z[:, 0:num_full, 1:num_full+1]
-    return x, a
-
 class GraphSPNMargCore(nn.Module):
     def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
         super().__init__()
@@ -285,10 +253,105 @@ class GraphSPNMargkAry(nn.Module):
         return mols, smls
 
 
+class GraphSPNMargFree(nn.Module):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
+        super().__init__()
+        self.nd_nodes = nd_n
+
+        nd = nd_n + 1
+        nk = max(nk_n, nk_e)
+
+        graph = Graph.random_binary_trees(nd, nl, nr)
+
+        args = EinsumNetwork.Args(
+            num_var=nd,
+            num_input_distributions=ni,
+            num_sums=ns,
+            exponential_family=ExponentialFamilyArray.CategoricalArray,
+            exponential_family_args={'K': nk},
+            use_em=False)
+
+        self.network = EinsumNetwork.EinsumNetwork(graph, args)
+        self.network.initialize()
+
+        self.rate = nn.Parameter(torch.randn(1, device=device), requires_grad=True)
+
+        self.atom_list = atom_list
+
+        self.device = device
+        self.to(device)
+
+    def forward(self, x):
+        o = []
+        c = torch.count_nonzero(x['x'] == len(self.atom_list), dim=1)
+        for num_empty in torch.unique(c):
+            num_full = self.nd_nodes-num_empty.item()
+            self.network.set_marginalization_idx(None) # TODO: propagate to the rest
+
+            m = c == num_empty
+            n = m.sum()
+            xx = x['x'][m][:, 0:num_full]
+            aa = x['a'][m][:, 0:num_full, 0:num_full]
+            xx = xx.reshape(n*num_full)
+            aa = aa.reshape(n*num_full, num_full)
+            aa = torch.cat((aa, torch.zeros(n*num_full, num_empty)), dim=1)
+
+            with torch.no_grad():
+                if num_empty > 0:
+                    mask = torch.zeros(self.nd_nodes+1, dtype=torch.bool)
+                    mask[num_full:] = True
+                    marginalization_idx = torch.arange(self.nd_nodes+1)[mask]
+
+                    self.network.set_marginalization_idx(marginalization_idx)
+                else:
+                    self.network.set_marginalization_idx(None)
+
+            z = torch.cat((xx.unsqueeze(1), aa), dim=1)
+            o.append(self.network(z.to(self.device)))
+
+        num_empty, _ = c.sort()
+        num_full = self.nd_nodes - num_empty
+        d = Poisson(self.rate.exp())
+
+        return d.log_prob(num_full.to(self.device)) + torch.cat(o)
+
+    def logpdf(self, x):
+        return self(x).mean()
+
+    def sample(self, num_samples):
+        mols = []
+        smls = []
+        d = Poisson(self.rate.exp())
+        c = self.nd_nodes - d.sample((num_samples, )).clamp(1, self.nd_nodes).to(torch.int)
+        for num_empty, num_samples in zip(*torch.unique(c, return_counts=True)):
+            num_full = self.nd_nodes-num_empty.item()
+            if num_empty > 0:
+                mask = torch.zeros(self.nd_nodes+1, dtype=torch.bool)
+                mask[num_full:] = True
+                marginalization_idx = torch.arange(self.nd_nodes+1)[mask]
+
+                self.network.set_marginalization_idx(marginalization_idx)
+            else:
+                self.network.set_marginalization_idx(None)
+
+            z = self.network.sample(num_samples*num_full).to(torch.int).cpu()
+
+            x = z[:, 0 ].view(-1, num_full)
+            a = z[:, 1:].view(-1, num_full, self.nd_nodes)
+            a = a[:, :, 0:num_full]
+
+            _mols, _smls = create_mols(x, a, self.atom_list)
+            mols.extend(_mols)
+            smls.extend(_smls)
+
+        return mols, smls
+
+
 MODELS = {
     'graphspn_marg_none': GraphSPNMargNone,
     'graphspn_marg_full': GraphSPNMargFull,
     'graphspn_marg_rand': GraphSPNMargRand,
     'graphspn_marg_sort': GraphSPNMargSort,
     'graphspn_marg_kary': GraphSPNMargkAry,
+    'graphspn_marg_free': GraphSPNMargFree,
 }
