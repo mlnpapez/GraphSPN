@@ -451,6 +451,148 @@ def template_zero_none(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     "seed": seed,
     "num_max_atoms": num_max_atoms
 }
+def template_zero_full(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0, num_max_atoms=999):
+    return {
+    "dataset": dataset,
+    "model": "graphspn_zero_full",
+    "model_hyperpars": {
+        "nd_n": nd,
+        "nk_n": nk,
+        "nk_e": 4,
+        "nl": nl,
+        "nr": nr,
+        "ns": ns,
+        "ni": ni,
+        "atom_list": atom_list,
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": lr,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": NUM_EPOCHS,
+    "batch_size": batch_size,
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
+}
+def template_zero_rand(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+    return {
+    "dataset": dataset,
+    "model": "graphspn_zero_rand",
+    "model_hyperpars": {
+        "nd_n": nd,
+        "nk_n": nk,
+        "nk_e": 4,
+        "nl": nl,
+        "nr": nr,
+        "ns": ns,
+        "ni": ni,
+        "np": np,
+        "atom_list": atom_list,
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": lr,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": NUM_EPOCHS,
+    "batch_size": batch_size,
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
+}
+def template_zero_sort(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+    return {
+    "dataset": dataset,
+    "model": "graphspn_zero_sort",
+    "model_hyperpars": {
+        "nd_n": nd,
+        "nk_n": nk,
+        "nk_e": 4,
+        "nl": nl,
+        "nr": nr,
+        "ns": ns,
+        "ni": ni,
+        "atom_list": atom_list,
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": lr,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": NUM_EPOCHS,
+    "batch_size": batch_size,
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
+}
+def template_zero_kary(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+    return {
+    "dataset": dataset,
+    "model": "graphspn_zero_kary",
+    "model_hyperpars": {
+        "nd_n": nd,
+        "nk_n": nk,
+        "nk_e": 4,
+        "nl": nl,
+        "nr": nr,
+        "ns": ns,
+        "ni": ni,
+        "arity": arity,
+        "atom_list": atom_list,
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": lr,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": NUM_EPOCHS,
+    "batch_size": batch_size,
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
+}
+def template_zero_free(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+    return {
+    "dataset": dataset,
+    "model": "graphspn_zero_free",
+    "model_hyperpars": {
+        "nd_n": nd,
+        "nk_n": nk,
+        "nk_e": 4,
+        "nl": nl,
+        "nr": nr,
+        "ns": ns,
+        "ni": ni,
+        "atom_list": atom_list,
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": lr,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": NUM_EPOCHS,
+    "batch_size": batch_size,
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
+}
 
 
 def template_marg_none(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
@@ -595,6 +737,34 @@ def template_marg_kary(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, ari
     "seed": seed,
     "num_max_atoms": num_max_atoms
 }
+def template_marg_free(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+    return {
+    "dataset": dataset,
+    "model": "graphspn_marg_free",
+    "model_hyperpars": {
+        "nd_n": nd,
+        "nk_n": nk,
+        "nk_e": 4,
+        "nl": nl,
+        "nr": nr,
+        "ns": ns,
+        "ni": ni,
+        "atom_list": atom_list,
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": lr,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": NUM_EPOCHS,
+    "batch_size": batch_size,
+    "seed": seed,
+    "num_max_atoms": num_max_atoms
+}
 
 
 HYPERPARS_TEMPLATES = [
@@ -614,12 +784,16 @@ HYPERPARS_TEMPLATES = [
     template_naive_deq_h,
 
     template_zero_none,
+    template_zero_full,
+    template_zero_rand,
+    template_zero_sort,
+    template_zero_kary,
 
     template_marg_none,
     template_marg_full,
     template_marg_rand,
     template_marg_sort,
-    template_marg_kary
+    template_marg_kary,
 ]
 
 

@@ -1,0 +1,31 @@
+{
+    "dataset": "qm9",
+    "model": "graphspn_zero_full",
+    "model_hyperpars": {
+        "nd_n": 9,
+        "nk_n": 5,
+        "nk_e": 4,
+        "nl": 1,
+        "nr": 10,
+        "ns": 5,
+        "ni": 5,
+        "atom_list": [
+            6,
+            7,
+            8,
+            9
+        ],
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": 0.05,
+        "betas": [
+            0.9,
+            0.82
+        ]
+    },
+    "num_epochs": 20,
+    "batch_size": 10,
+    "seed": 0
+}

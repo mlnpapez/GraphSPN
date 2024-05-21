@@ -43,7 +43,7 @@ def unsupervised(dataset, name, par_buffer):
 
     path = utils.train(model, loader_trn, loader_val, smiles_trn, hyperpars, CHECKPOINT_DIR, TRAINEPOCH_DIR, verbose=True)
     model = torch.load(path)
-    metric = utils.evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, EVALUATION_DIR)
+    metric = utils.evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, EVALUATION_DIR, compute_nll=False)
 
     print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metric.items()))
 
@@ -91,7 +91,7 @@ def submit_job(dataset, model, par_buffer, device, max_sub):
 
 if __name__ == "__main__":
     par_buffer = []
-    all_models = ['graphspn_marg_rand'] # [k for k in MODELS.keys() if k not in ['graphspn_marg_full']]
+    all_models = [k for k in MODELS.keys() if k not in ['graphspn_zero_full', 'graphspn_marg_full']]
     gpu_models = MODELS.keys()
 
     for dataset, attributes in datasets.MOLECULAR_DATASETS.items():

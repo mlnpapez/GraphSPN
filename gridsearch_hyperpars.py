@@ -5,6 +5,7 @@ from templates_hyperpars import *
 
 LINE = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
 NL = 2
+NR = 20
 
 def grid_naive_cat_a(dataset, num_max_atoms=None):
     nl = [1, 2, 3]
@@ -189,6 +190,16 @@ def grid_naive_deq_h(dataset, num_max_atoms=None):
 
 def line_zero_none(dataset):
     return [template_zero_none(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_zero_full(dataset):
+    return [template_zero_full(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_zero_rand(dataset):
+    return [template_zero_rand(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_zero_sort(dataset):
+    return [template_zero_sort(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_zero_kary(dataset):
+    return [template_zero_kary(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_zero_free(dataset):
+    return [template_zero_free(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
 
 
 def line_marg_none(dataset):
@@ -201,6 +212,8 @@ def line_marg_sort(dataset):
     return [template_marg_sort(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
 def line_marg_kary(dataset):
     return [template_marg_kary(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+def line_marg_free(dataset):
+    return [template_marg_free(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
 
 
 GRIDS = {
@@ -220,12 +233,18 @@ GRIDS = {
     'graphspn_naive_deq_h': grid_naive_deq_b,
 
     'graphspn_zero_none': line_zero_none,
+    'graphspn_zero_full': line_zero_full,
+    'graphspn_zero_rand': line_zero_rand,
+    'graphspn_zero_sort': line_zero_sort,
+    'graphspn_zero_kary': line_zero_kary,
+    'graphspn_zero_free': line_zero_free,
 
     'graphspn_marg_none': line_marg_none,
     'graphspn_marg_full': line_marg_full,
     'graphspn_marg_rand': line_marg_rand,
     'graphspn_marg_sort': line_marg_sort,
     'graphspn_marg_kary': line_marg_kary,
+    'graphspn_marg_free': line_marg_free,
 }
 
 
