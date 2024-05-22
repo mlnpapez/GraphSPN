@@ -272,7 +272,7 @@ def train(model,
           trainepoch_dir,
           num_nonimproving_epochs=30,
           verbose=False,
-          metric_type='valid'
+          metric_type='score'
     ):
     optimizer = optim.Adam(model.parameters(), **hyperpars['optimizer_hyperpars'])
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)

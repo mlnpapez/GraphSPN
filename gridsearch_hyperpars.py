@@ -3,8 +3,8 @@ import itertools
 from datasets import MOLECULAR_DATASETS
 from templates_hyperpars import *
 
-LINE = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
-NL = 2
+LINE = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145]
+NL = 1
 NR = 20
 
 def grid_naive_cat_a(dataset, num_max_atoms=None):
@@ -189,31 +189,31 @@ def grid_naive_deq_h(dataset, num_max_atoms=None):
 
 
 def line_zero_none(dataset):
-    return [template_zero_none(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_zero_none(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_zero_full(dataset):
-    return [template_zero_full(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_zero_full(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_zero_rand(dataset):
-    return [template_zero_rand(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_zero_rand(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_zero_sort(dataset):
-    return [template_zero_sort(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_zero_sort(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_zero_kary(dataset):
-    return [template_zero_kary(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_zero_kary(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_zero_free(dataset):
-    return [template_zero_free(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_zero_free(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 
 
 def line_marg_none(dataset):
-    return [template_marg_none(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_marg_none(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_marg_full(dataset):
-    return [template_marg_full(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_marg_full(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_marg_rand(dataset):
-    return [template_marg_rand(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_marg_rand(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_marg_sort(dataset):
-    return [template_marg_sort(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_marg_sort(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_marg_kary(dataset):
-    return [template_marg_kary(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_marg_kary(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 def line_marg_free(dataset):
-    return [template_marg_free(*dataset.values(), nl=NL, nr=p, ns=p, ni=p) for p in LINE]
+    return [template_marg_free(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE]
 
 
 GRIDS = {

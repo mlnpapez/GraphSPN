@@ -6,9 +6,9 @@
         "nk_n": 5,
         "nk_e": 4,
         "nl": 2,
-        "nr": 10,
-        "ns": 20,
-        "ni": 20,
+        "nr": 50,
+        "ns": 40,
+        "ni": 40,
         "atom_list": [
             6,
             7,
@@ -25,7 +25,7 @@
             0.82
         ]
     },
-    "num_epochs": 100,
+    "num_epochs": 20,
     "batch_size": 1000,
     "seed": 0
 }
