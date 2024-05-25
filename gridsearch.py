@@ -33,6 +33,7 @@ def unsupervised(dataset, name, par_buffer):
 
     x_trn, _, _ = datasets.load_dataset(dataset, 0, raw=True)
     smiles_trn = [x['s'] for x in x_trn]
+    # loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset)
 
     model = MODELS[name](**hyperpars['model_hyperpars'])
 
@@ -91,7 +92,8 @@ def submit_job(dataset, model, par_buffer, device, max_sub):
 
 if __name__ == "__main__":
     par_buffer = []
-    all_models = [k for k in MODELS.keys() if k not in ['graphspn_zero_full', 'graphspn_marg_full']]
+    # all_models = [k for k in MODELS.keys() if k not in ['graphspn_zero_full', 'graphspn_marg_full']]
+    all_models = ['graphspn_zero_none', 'graphspn_zero_rand', 'graphspn_zero_sort', 'graphspn_zero_kary', 'graphspn_zero_free']
     gpu_models = MODELS.keys()
 
     for dataset, attributes in datasets.MOLECULAR_DATASETS.items():

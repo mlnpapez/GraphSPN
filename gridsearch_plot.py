@@ -46,6 +46,7 @@ if __name__ == "__main__":
     evaluation_dir = 'results/linesearch/model_evaluation/metrics/qm9/'
 
     models = os.listdir(evaluation_dir)
+    # models = ['graphspn_zero_none', 'graphspn_zero_rand', 'graphspn_zero_sort', 'graphspn_zero_kary', 'graphspn_zero_free']
 
     doc = Document(documentclass='standalone', document_options=('preview'), geometry_options={'margin': '1cm'})
     doc.packages.append(NoEscape(r'\usepackage{pgfplots}'))

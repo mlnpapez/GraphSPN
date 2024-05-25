@@ -88,14 +88,24 @@ class GraphSPNZeroRand(GraphSPNZeroCore):
     def forward(self, x):
         xx = x['x']
         aa = x['a']
-        l = torch.zeros(len(xx), min(self.num_perms, math.factorial(self.nd_nodes)), device=self.device)
-        for i, pi in enumerate(self.permutations):
-            with torch.no_grad():
-                px, pa = permute_graph(xx, aa, pi)
-            z = flatten_graph(px, pa)
-            l[:, i] = self.network(z.to(self.device)).squeeze()
-        return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
+        # l = torch.zeros(len(xx), min(self.num_perms, math.factorial(self.nd_nodes)), device=self.device)
+        # for i, pi in enumerate(self.permutations):
+        # # permutations = torch.stack([torch.randperm(self.nd_nodes) for _ in range(self.num_perms)])
+        # # for i, pi in enumerate(permutations):
+        #     with torch.no_grad():
+        #         px, pa = permute_graph(xx, aa, pi)
+        #     z = flatten_graph(px, pa)
+        #     l[:, i] = self.network(z.to(self.device)).squeeze()
+        # return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
+        for i in range(len(xx)):
+            num_full = torch.sum(xx[i, :] != len(self.atom_list))
+            pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, self.nd_nodes)))
+            xx[i, :] = xx[i, pi]
+            aa[i, :, :] = aa[i, pi, :]
+            aa[i, :, :] = aa[i, :, pi]
 
+        z = flatten_graph(xx, aa)
+        return self.network(z.to(self.device))
 
 class GraphSPNZeroSort(GraphSPNZeroCore):
     def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
@@ -105,8 +115,21 @@ class GraphSPNZeroSort(GraphSPNZeroCore):
         xx = x['x']
         aa = x['a']
         with torch.no_grad():
-            xx, pi = xx.sort(dim=1)
+            # xx, pi = xx.sort(dim=1)
+            # for i, p in enumerate(pi):
+            #     aa[i, :, :] = aa[i, p, :]
+            #     aa[i, :, :] = aa[i, :, p]
+            xs = torch.zeros_like(xx)
+            for i in range(len(xx)):
+                num_full = torch.sum(xx[i, :] != len(self.atom_list))
+                for j in range(self.nd_nodes):
+                    if (j < num_full) and (xx[i, j] < len(self.atom_list)):
+                        xs[i, j] = self.atom_list[xx[i, j]]
+                    else:
+                        xs[i, j] = len(self.atom_list)
+            _, pi = xs.sort(dim=1)
             for i, p in enumerate(pi):
+                xx[i, :] = xx[i, p]
                 aa[i, :, :] = aa[i, p, :]
                 aa[i, :, :] = aa[i, :, p]
         z = flatten_graph(xx, aa)

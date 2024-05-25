@@ -17,7 +17,7 @@ if __name__ == '__main__':
     RDLogger.DisableLog('rdApp.*')
 
     dataset = 'qm9'
-    models = ['graphspn_zero_rand'] # MODELS.keys()
+    models = ['graphspn_zero_none'] # MODELS.keys()
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
@@ -36,8 +36,10 @@ if __name__ == '__main__':
         else:
             loader_trn, loader_val, loader_tst = datasets.load_dataset(hyperpars['dataset'], hyperpars['batch_size'], ohe=False)
 
-        x_trn, _, _ = datasets.load_dataset(hyperpars['dataset'], 0, raw=True)
-        smiles_trn = [x['s'] for x in x_trn]
+        loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset)
+
+        # x_trn, _, _ = datasets.load_dataset(hyperpars['dataset'], 0, raw=True)
+        # smiles_trn = [x['s'] for x in x_trn]
 
         path = utils.train(model, loader_trn, loader_val, smiles_trn, hyperpars, checkpoint_dir, trainepoch_dir)
         model = torch.load(path)

@@ -5,7 +5,7 @@ import pandas
 
 from rdkit import Chem
 from tqdm import tqdm
-from utils import bond_encoder
+from utils import bond_encoder, create_mol, isvalid
 
 
 MOLECULAR_DATASETS = {
@@ -207,6 +207,27 @@ def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_siz
             return x
         else:
             return loader_wrapper(x, batch_size, True)
+
+
+def permute_dataset(loader, dataset):
+    nd = MOLECULAR_DATASETS[dataset]['nd']
+    al = MOLECULAR_DATASETS[dataset]['atom_list']
+
+    smls = []
+    for d in loader.dataset.data:
+        xx, aa = d['x'], d['a']
+
+        num_full = torch.sum(xx != len(al))
+        pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, nd)))
+
+        px = xx[pi]
+        pa = aa[pi, :]
+        pa = pa[:, pi]
+
+        d['x'], d['a'] = px, pa
+        smls.append(Chem.MolToSmiles(create_mol(px, pa, al)))
+
+    return loader, smls
 
 
 if __name__ == '__main__':

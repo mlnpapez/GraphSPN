@@ -92,35 +92,37 @@ def isvalid(mol):
     else:
         return False
 
+def create_mol(x, a, atom_list):
+    rw_mol = Chem.RWMol()
+
+    for i in range(len(x)):
+        if x[i].item() < len(atom_list):
+            rw_mol.AddAtom(Chem.Atom(atom_decoder(atom_list)[x[i].item()]))
+
+    num_atoms = rw_mol.GetNumAtoms()
+
+    for i in range(num_atoms):
+        for j in range(num_atoms):
+            if a[i, j].item() < 3 and i > j:
+                rw_mol.AddBond(i, j, bond_decoder[a[i, j].item()])
+
+                flag, valence = valency(rw_mol)
+                if flag:
+                    continue
+                else:
+                    assert len(valence) == 2
+                    k = valence[0]
+                    v = valence[1]
+                    atomic_number = rw_mol.GetAtomWithIdx(k).GetAtomicNum()
+                    if atomic_number in (7, 8, 16) and (v - VALENCY_LIST[atomic_number]) == 1:
+                        rw_mol.GetAtomWithIdx(k).SetFormalCharge(1)
+    return rw_mol
+
 def create_mols(x, a, atom_list):
-    nd_nodes = x.size(1)
     mols = []
     smls = []
     for x, a in zip(x, a):
-        rw_mol = Chem.RWMol()
-
-        for i in range(nd_nodes):
-            if x[i].item() < len(atom_list):
-                rw_mol.AddAtom(Chem.Atom(atom_decoder(atom_list)[x[i].item()]))
-
-        num_atoms = rw_mol.GetNumAtoms()
-
-        for i in range(num_atoms):
-            for j in range(num_atoms):
-                if a[i, j].item() < 3 and i > j:
-                    rw_mol.AddBond(i, j, bond_decoder[a[i, j].item()])
-
-                    flag, valence = valency(rw_mol)
-                    if flag:
-                        continue
-                    else:
-                        assert len(valence) == 2
-                        k = valence[0]
-                        v = valence[1]
-                        atomic_number = rw_mol.GetAtomWithIdx(k).GetAtomicNum()
-                        if atomic_number in (7, 8, 16) and (v - VALENCY_LIST[atomic_number]) == 1:
-                            rw_mol.GetAtomWithIdx(k).SetFormalCharge(1)
-
+        rw_mol = create_mol(x, a, atom_list)
         rw_mol = radical_electrons_to_hydrogens(rw_mol)
 
         mols.append(rw_mol)

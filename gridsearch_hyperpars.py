@@ -3,8 +3,9 @@ import itertools
 from datasets import MOLECULAR_DATASETS
 from templates_hyperpars import *
 
-LINE = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145]
-NL = 1
+# LINE = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145]
+LINE = [5, 15, 25, 35, 45, 55, 65, 75, 85, 95]
+NL = 2
 NR = 20
 
 def grid_naive_cat_a(dataset, num_max_atoms=None):
