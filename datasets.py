@@ -5,7 +5,7 @@ import pandas
 
 from rdkit import Chem
 from tqdm import tqdm
-from utils import bond_encoder, create_mol, isvalid
+from utils import bond_encoder, graph_to_mol, mol_to_graph
 
 
 MOLECULAR_DATASETS = {
@@ -46,7 +46,6 @@ class MolecularDataset(torch.utils.data.Dataset):
         data_tst = MolecularDataset([self.data[i] for i in i_tst])
 
         return data_trn, data_val, data_tst
-
 
 def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_list, fixed_size=True, ohe=False):
     input_df = pandas.read_csv(f'{path}.csv', sep=',', dtype='str')
@@ -103,24 +102,7 @@ def preprocess(path, smile_col, prop_name, available_prop, num_max_atom, atom_li
                                       'a_deq': bond_tensor_deq})
 
             else:
-                atom_tensor = torch.zeros(tensor_size, dtype=torch.int8)
-                for atom_idx, atom in enumerate(mol.GetAtoms()):
-                    atom_type = atom.GetAtomicNum()
-                    atom_tensor[atom_idx] = atom_list.index(atom_type) + 1
-                atom_tensor[atom_tensor==0] = len(atom_list) + 1
-
-                bond_tensor = torch.zeros(tensor_size, tensor_size, dtype=torch.int8)
-                for bond in mol.GetBonds():
-                    bond_type = bond.GetBondType()
-                    c = bond_encoder[bond_type] + 1
-                    i = bond.GetBeginAtomIdx()
-                    j = bond.GetEndAtomIdx()
-                    bond_tensor[i, j] = c
-                    bond_tensor[j, i] = c
-                bond_tensor[bond_tensor==0] = len(bond_encoder) + 1
-
-                atom_tensor -= 1
-                bond_tensor -= 1
+                atom_tensor, bond_tensor = mol_to_graph(mol, tensor_size, atom_list)
 
                 if available_prop:
                     y = torch.tensor([float(prop_list[k])])
@@ -209,23 +191,30 @@ def load_dataset(dataset, batch_size, raw=False, seed=0, val_size=10000, tst_siz
             return loader_wrapper(x, batch_size, True)
 
 
-def permute_dataset(loader, dataset):
+def permute_dataset(loader, dataset, permutation='all'):
     nd = MOLECULAR_DATASETS[dataset]['nd']
     al = MOLECULAR_DATASETS[dataset]['atom_list']
+
+    single = torch.randperm(nd)
 
     smls = []
     for d in loader.dataset.data:
         xx, aa = d['x'], d['a']
 
         num_full = torch.sum(xx != len(al))
-        pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, nd)))
+        if permutation == 'all':
+            pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, nd)))
+        elif permutation == 'single':
+            pi = torch.cat((single[0:num_full], torch.arange(num_full, nd)))
+        elif permutation == 'canonical':
+            pi = torch.arange(nd) # TODO: This is not very efficient.
 
         px = xx[pi]
         pa = aa[pi, :]
         pa = pa[:, pi]
 
         d['x'], d['a'] = px, pa
-        smls.append(Chem.MolToSmiles(create_mol(px, pa, al)))
+        smls.append(Chem.MolToSmiles(graph_to_mol(px, pa, al)))
 
     return loader, smls
 

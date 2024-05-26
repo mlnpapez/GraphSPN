@@ -1,4 +1,5 @@
 import math
+from numpy import arange
 import torch
 import torch.nn as nn
 import itertools
@@ -114,24 +115,38 @@ class GraphSPNZeroSort(GraphSPNZeroCore):
     def forward(self, x):
         xx = x['x']
         aa = x['a']
-        with torch.no_grad():
+        # with torch.no_grad():
             # xx, pi = xx.sort(dim=1)
             # for i, p in enumerate(pi):
             #     aa[i, :, :] = aa[i, p, :]
             #     aa[i, :, :] = aa[i, :, p]
-            xs = torch.zeros_like(xx)
-            for i in range(len(xx)):
-                num_full = torch.sum(xx[i, :] != len(self.atom_list))
-                for j in range(self.nd_nodes):
-                    if (j < num_full) and (xx[i, j] < len(self.atom_list)):
-                        xs[i, j] = self.atom_list[xx[i, j]]
-                    else:
-                        xs[i, j] = len(self.atom_list)
-            _, pi = xs.sort(dim=1)
-            for i, p in enumerate(pi):
-                xx[i, :] = xx[i, p]
-                aa[i, :, :] = aa[i, p, :]
-                aa[i, :, :] = aa[i, :, p]
+
+            # xs = torch.zeros_like(xx)
+            # for i in range(len(xx)):
+            #     num_full = torch.sum(xx[i, :] != len(self.atom_list))
+            #     for j in range(self.nd_nodes):
+            #         if (j < num_full) and (xx[i, j] < len(self.atom_list)):
+            #             xs[i, j] = self.atom_list[xx[i, j]]
+            #         else:
+            #             xs[i, j] = len(self.atom_list)
+            # _, pi = xs.sort(dim=1)
+            # for i, p in enumerate(pi):
+            #     xx[i, :] = xx[i, p]
+            #     aa[i, :, :] = aa[i, p, :]
+            #     aa[i, :, :] = aa[i, :, p]
+
+            # Impose the canonical ordering
+            # xx, aa = create_graphs(create_mols(xx, aa, self.atom_list, canonical=True)[0], self.nd_nodes, self.atom_list)
+
+            # for i, mol in enumerate(create_mols(xx, aa, self.atom_list)[0]):
+            #     p = list(Chem.CanonicalRankAtoms(mol))
+            #     p = p + list(arange(len(p), self.nd_nodes))
+            #     xx[i, :] = xx[i, p]
+            #     aa[i, :, :] = aa[i, p, :]
+            #     aa[i, :, :] = aa[i, :, p]
+
+            # Best to impose the canonical ordering outside
+
         z = flatten_graph(xx, aa)
         return self.network(z.to(self.device))
 

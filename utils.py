@@ -92,41 +92,77 @@ def isvalid(mol):
     else:
         return False
 
-def create_mol(x, a, atom_list):
-    rw_mol = Chem.RWMol()
+def mol_to_graph(mol, tensor_size, atom_list):
+    Chem.Kekulize(mol)
+    atom_tensor = torch.zeros(tensor_size, dtype=torch.int8)
+    for atom_idx, atom in enumerate(mol.GetAtoms()):
+        atom_type = atom.GetAtomicNum()
+        atom_tensor[atom_idx] = atom_list.index(atom_type) + 1
+    atom_tensor[atom_tensor==0] = len(atom_list) + 1
+
+    bond_tensor = torch.zeros(tensor_size, tensor_size, dtype=torch.int8)
+    for bond in mol.GetBonds():
+        bond_type = bond.GetBondType()
+        c = bond_encoder[bond_type] + 1
+        i = bond.GetBeginAtomIdx()
+        j = bond.GetEndAtomIdx()
+        bond_tensor[i, j] = c
+        bond_tensor[j, i] = c
+    bond_tensor[bond_tensor==0] = len(bond_encoder) + 1
+
+    atom_tensor -= 1
+    bond_tensor -= 1
+
+    return atom_tensor, bond_tensor
+
+def graph_to_mol(x, a, atom_list):
+    mol = Chem.RWMol()
 
     for i in range(len(x)):
         if x[i].item() < len(atom_list):
-            rw_mol.AddAtom(Chem.Atom(atom_decoder(atom_list)[x[i].item()]))
+            mol.AddAtom(Chem.Atom(atom_decoder(atom_list)[x[i].item()]))
 
-    num_atoms = rw_mol.GetNumAtoms()
+    num_atoms = mol.GetNumAtoms()
 
     for i in range(num_atoms):
         for j in range(num_atoms):
             if a[i, j].item() < 3 and i > j:
-                rw_mol.AddBond(i, j, bond_decoder[a[i, j].item()])
+                mol.AddBond(i, j, bond_decoder[a[i, j].item()])
 
-                flag, valence = valency(rw_mol)
+                flag, valence = valency(mol)
                 if flag:
                     continue
                 else:
                     assert len(valence) == 2
                     k = valence[0]
                     v = valence[1]
-                    atomic_number = rw_mol.GetAtomWithIdx(k).GetAtomicNum()
+                    atomic_number = mol.GetAtomWithIdx(k).GetAtomicNum()
                     if atomic_number in (7, 8, 16) and (v - VALENCY_LIST[atomic_number]) == 1:
-                        rw_mol.GetAtomWithIdx(k).SetFormalCharge(1)
-    return rw_mol
+                        mol.GetAtomWithIdx(k).SetFormalCharge(1)
+    return mol
 
-def create_mols(x, a, atom_list):
+def create_graphs(mols, tensor_size, atom_list):
+    n = len(mols)
+    x = torch.zeros(n, tensor_size, dtype=torch.int8)
+    a = torch.zeros(n, tensor_size, tensor_size, dtype=torch.int8)
+
+    for i, mol in enumerate(mols):
+        x[i, :], a[i, :, :] = mol_to_graph(mol, tensor_size, atom_list)
+
+    return x, a
+
+def create_mols(x, a, atom_list, canonical=False):
     mols = []
     smls = []
     for x, a in zip(x, a):
-        rw_mol = create_mol(x, a, atom_list)
-        rw_mol = radical_electrons_to_hydrogens(rw_mol)
+        mol = graph_to_mol(x, a, atom_list)
+        mol = radical_electrons_to_hydrogens(mol)
+        sml = Chem.MolToSmiles(mol)
+        if canonical == True:
+            mol = Chem.MolFromSmiles(sml)
 
-        mols.append(rw_mol)
-        smls.append(Chem.MolToSmiles(rw_mol))
+        mols.append(mol)
+        smls.append(sml)
 
     return mols, smls
 

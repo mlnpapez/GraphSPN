@@ -132,12 +132,12 @@ class GraphSPNMargSort(GraphSPNMargCore):
         super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
 
     def _forward(self, xx, aa, num_full):
-        with torch.no_grad():
-            xx, pi = xx.sort(dim=1)
-            pi = torch.cat((pi[:, :num_full], torch.arange(num_full, self.nd_nodes).repeat(len(xx), 1)), dim=1)
-            for i, p in enumerate(pi):
-                aa[i, :, :] = aa[i, p, :]
-                aa[i, :, :] = aa[i, :, p]
+        # with torch.no_grad():
+        #     xx, pi = xx.sort(dim=1)
+        #     pi = torch.cat((pi[:, :num_full], torch.arange(num_full, self.nd_nodes).repeat(len(xx), 1)), dim=1)
+        #     for i, p in enumerate(pi):
+        #         aa[i, :, :] = aa[i, p, :]
+        #         aa[i, :, :] = aa[i, :, p]
         z = flatten_graph(xx, aa)
         return self.network(z.to(self.device))
 
