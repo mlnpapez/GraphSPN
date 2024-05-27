@@ -42,7 +42,6 @@ def highlight_grid(smiles_mat, smarts_patts, path="mol.png"):
             mol = Chem.MolFromSmiles(smile_mol, sanitize=False)
             AllChem.GenerateDepictionMatching2DStructure(mol, patt, acceptFailure=True)
             mols.append(mol)
-            print(smile_mol)
             hit_at, hit_bond = get_hit(mol, patt)
             # hit_at, hit_bond = [], []
             hit_ats.append(hit_at)
