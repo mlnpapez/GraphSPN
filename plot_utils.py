@@ -39,10 +39,12 @@ def highlight_grid(smiles_mat, smarts_patts, path="mol.png"):
         patt = Chem.MolFromSmarts(smile_patt)
         AllChem.Compute2DCoords(patt)
         for smile_mol in row:
-            mol = Chem.MolFromSmiles(smile_mol)
-            AllChem.GenerateDepictionMatching2DStructure(mol, patt)
+            mol = Chem.MolFromSmiles(smile_mol, sanitize=False)
+            AllChem.GenerateDepictionMatching2DStructure(mol, patt, acceptFailure=True)
             mols.append(mol)
+            print(smile_mol)
             hit_at, hit_bond = get_hit(mol, patt)
+            # hit_at, hit_bond = [], []
             hit_ats.append(hit_at)
             hit_bonds.append(hit_bond)
 
@@ -55,13 +57,19 @@ def highlight_grid(smiles_mat, smarts_patts, path="mol.png"):
 
 
 if __name__ == "__main__":
-    slist = ['CC1=CC2=C(C=C1)C(=CN2CCN1CCOCC1)C(=O)C1=CC=CC2=C1C=CC=C2',
-        'CCCCCN1C=C(C2=CC=CC=C21)C(=O)C3=CC=CC4=CC=CC=C43',
-        'CC1COCCN1CCN1C=C(C(=O)C2=CC=CC3=C2C=CC=C3)C2=C1C=CC=C2',
-        'CC1=CC=C(C(=O)C2=CN(CCN3CCOCC3)C3=C2C=CC=C3)C2=C1C=CC=C2',
-        'CC1=C(CCN2CCOCC2)C2=C(C=CC=C2)N1C(=O)C1=CC=CC2=CC=CC=C12',
-        'CN1CCN(C(C1)CN2C=C(C3=CC=CC=C32)C(=O)C4=CC=CC5=CC=CC=C54)C']
-    smile_mols = [slist, slist]
-    smart_patts = ['c1c2ccccc2ccc1', 'C=O']
+    # slist = ['CC1=CC2=C(C=C1)C(=CN2CCN1CCOCC1)C(=O)C1=CC=CC2=C1C=CC=C2',
+    #     'CCCCCN1C=C(C2=CC=CC=C21)C(=O)C3=CC=CC4=CC=CC=C43',
+    #     'CC1COCCN1CCN1C=C(C(=O)C2=CC=CC3=C2C=CC=C3)C2=C1C=CC=C2',
+    #     'CC1=CC=C(C(=O)C2=CN(CCN3CCOCC3)C3=C2C=CC=C3)C2=C1C=CC=C2',
+    #     'CC1=C(CCN2CCOCC2)C2=C(C=CC=C2)N1C(=O)C1=CC=CC2=CC=CC=C12',
+    #     'CN1CCN(C(C1)CN2C=C(C3=CC=CC=C32)C(=O)C4=CC=CC5=CC=CC=C54)C']
+    # smile_mols = [slist, slist]
+    # smart_patts = ['c1c2ccccc2ccc1', 'C=O']
 
-    highlight_grid(smile_mols, smart_patts)
+    # highlight_grid(smile_mols, smart_patts)
+
+    slist = ['OCCC1C2=CC[O+]1C2', 'OC1=CNC2=C1COC2', 'CC1C2=CC[O+]1C2', 'C1=C2C[O+](C1)C2', 'OC1=NOC2=C1COC2']
+    smls = [slist]
+    patts_smls = ['C1OCC=C1']
+    highlight_grid(smls, patts_smls)
+
