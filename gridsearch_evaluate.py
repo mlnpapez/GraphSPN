@@ -1,9 +1,25 @@
 import os
+from numpy import NaN
 import pandas as pd
 import graphspn
 
 from tqdm import tqdm
 from pylatex import Document, Package, NoEscape
+
+MODEL_NAMES_TABLE = {
+    'graphspn_marg_none': 'GraphSPN(mnone)',
+    'graphspn_marg_full': 'GraphSPN(mfull)',
+    'graphspn_marg_rand': 'GraphSPN(mrand)',
+    'graphspn_marg_sort': 'GraphSPN(msort)',
+    'graphspn_marg_kary': 'GraphSPN(mkary)',
+    'graphspn_marg_free': 'GraphSPN(mfree)',
+    'graphspn_zero_none': 'GraphSPN: None',
+    'graphspn_zero_full': 'GraphSPN: Full',
+    'graphspn_zero_rand': 'GraphSPN: Rand',
+    'graphspn_zero_sort': 'GraphSPN: Sort',
+    'graphspn_zero_kary': 'GraphSPN: $k$-ary',
+    'graphspn_zero_free': 'GraphSPN: Ind',
+}
 
 IGNORE = [
     'atom_list',
@@ -33,14 +49,15 @@ IGNORE = [
     'file_path',
     ]
 
-COLUMN_WORKING_NAMES = ['model', 'validity', 'uniqueness', 'novelty', 'score']
-COLUMN_DISPLAY_NAMES = ['Model', 'Validity', 'Uniqueness', 'Novelty', 'Score']
+COLUMN_WORKING_NAMES = ['model', 'validity', 'validitywocheck',    'uniqueness', 'novelty']
+COLUMN_DISPLAY_NAMES = ['Model', 'Validity', 'Validity w/o check', 'Uniqueness', 'Novelty']
 
 def baseline_models_qm9():
-    data = [['GVAE', 'GraphNVP', 'GRF', 'GraphAF', 'GraphDF', 'MoFlow', 'ModFlow'],
-            [  60.2,       83.1,  84.5,      67.0,      82.7,     89.0,      99.1],
-            [   9.3,       99.2,  66.0,      94.2,      97.6,     98.5,      99.3],
-            [  80.9,       58.2,  58.6,      88.8,      98.1,     96.4,     100.0]]
+    data = [['GraphVAE', 'GVAE', 'CVAE', 'RVAE', 'GraphNVP', 'GRF', 'GraphAF', 'GraphDF', 'MoFlow', 'ModFlow'],
+            [      55.7,   60.2,   10.2,   96.6,       83.1,  84.5,     100.0,     100.0,    100.0,       NaN],
+            [       NaN,    NaN,    NaN,    NaN,        NaN,   NaN,      67.0,      82.7,     89.0,      99.1],
+            [      76.0,    9.3,   67.5,    NaN,       99.2,  66.0,      94.2,      97.6,     98.5,      99.3],
+            [      61.6,   80.9,   90.0,   95.5,       58.2,  58.6,      88.8,      98.1,     96.4,     100.0]]
     return pd.DataFrame.from_dict({k:v for k, v, in zip(COLUMN_WORKING_NAMES, data)})
 
 
@@ -70,12 +87,12 @@ def latexify_table(r_name, w_name, clean_tex=True):
     doc.generate_pdf(f'{w_name}', clean_tex=clean_tex)
 
 
-def find_best_models(dataset, names_models, evaluation_dir, bestmodels_dir):
+def find_best_models(dataset, names_models, evaluation_dir):
     data_unsu = pd.DataFrame(0., index=range(len(names_models)), columns=COLUMN_WORKING_NAMES)
 
     for i, model in tqdm(enumerate(names_models), leave=False):
         res_frames = []
-        path = evaluation_dir + 'metrics/' + f'{dataset}/' + f'{model}/'
+        path = evaluation_dir + f'{model}/'
         for f in os.listdir(path):
             data = pd.read_csv(path + f)
             data['file_path'] = f.replace('.csv', '.pt')
@@ -89,25 +106,27 @@ def find_best_models(dataset, names_models, evaluation_dir, bestmodels_dir):
         })
         best_frame = grp_frames.get_group(agg_frames['res_f_score'].idxmax())
 
-        data_unsu.loc[i] = [model.replace('_', '-'), 100*best_frame['res_f_valid'].mean(), 100*best_frame['res_f_unique'].mean(), 100*best_frame['res_f_novel'].mean(), 100*best_frame['res_f_score'].mean()]
+        data_unsu.loc[i] = [MODEL_NAMES_TABLE[model], 100*best_frame['cor_t_valid'].mean(), 100*best_frame['res_f_valid'].mean(), 100*best_frame['res_f_unique'].mean(), 100*best_frame['res_f_novel'].mean()]
 
     return data_unsu
 
 
 if __name__ == "__main__":
-    checkpoint_dir = 'results/gridsearch/model_checkpoint/'
-    evaluation_dir = 'results/gridsearch/model_evaluation/'
-    hyperparam_dir = 'results/gridsearch/model_outputlogs/'
-    bestmodels_dir = 'results/gridsearch/'
+    # checkpoint_dir = 'results/linesearch/model_checkpoint/'
+    evaluation_dir = 'results/linesearch/model_evaluation/metrics/qm9/'
+    # hyperparam_dir = 'results/linesearch/model_outputlogs/'
+    # bestmodels_dir = 'results/linesearch/'
 
-    names_models   = [name for name in graphspn.MODELS.keys() if name not in ['graphspn_naive_deq_b', 'graphspn_naive_deq_h']]
+    # models   = [name for name in graphspn.MODELS.keys() if name not in ['graphspn_naive_deq_b', 'graphspn_naive_deq_h']]
+    # models = os.listdir(evaluation_dir)
+    models = ['graphspn_zero_none', 'graphspn_zero_rand', 'graphspn_zero_sort', 'graphspn_zero_kary', 'graphspn_zero_free']
 
     baselines = baseline_models_qm9()
     
-    ourmodels = find_best_models('qm9', names_models, evaluation_dir, bestmodels_dir)
-    baselines['score'] = baselines.apply(lambda row: row['validity']*row['uniqueness']*row['novelty']/10000, axis=1)
+    ourmodels = find_best_models('qm9', models, evaluation_dir)
+    # baselines['score'] = baselines.apply(lambda row: row['validity']*row['uniqueness']*row['novelty']/10000, axis=1)
 
     allmodels = pd.concat([baselines, ourmodels], ignore_index=True)
 
-    latexify_style(allmodels, 'qm9.tab', column_names=COLUMN_DISPLAY_NAMES + ['Score'])
+    latexify_style(allmodels, 'qm9.tab', column_names=COLUMN_DISPLAY_NAMES)
     latexify_table('qm9.tab', 'qm9')
