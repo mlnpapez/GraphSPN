@@ -313,8 +313,10 @@ def train(model,
           metric_type='score'
     ):
     optimizer = optim.Adam(model.parameters(), **hyperpars['optimizer_hyperpars'])
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
- 
+    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=5, T_mult=1, eta_min=1e-4)
+
+
     lookahead_counter = num_nonimproving_epochs
     if metric_type in METRIC_TYPES:
         best_metric = 0e0

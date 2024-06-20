@@ -1,0 +1,37 @@
+{
+    "dataset": "zinc250k",
+    "model": "graphspn_back_none",
+    "model_hyperpars": {
+        "nd_n": 38,
+        "nk_n": 10,
+        "nk_e": 4,
+        "nz": 16,
+        "nl": 4,
+        "nb": 1024,
+        "nc": 2,
+        "atom_list": [
+            6,
+            7,
+            8,
+            9,
+            15,
+            16,
+            17,
+            35,
+            53
+        ],
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": 0.001,
+        "betas": [
+            0.9,
+            0.999
+        ],
+        "weight_decay": 1e-4
+    },
+    "num_epochs": 50,
+    "batch_size": 1000,
+    "seed": 0
+}

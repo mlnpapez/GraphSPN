@@ -2,14 +2,15 @@ import json
 import torch
 import utils
 import datasets
-import graphspn
+import graphspn_naive
 import graphspn_zero
 import graphspn_marg
+import graphspn_back
 
 from rdkit import RDLogger
 
 
-MODELS = {**graphspn.MODELS, **graphspn_zero.MODELS, **graphspn_marg.MODELS}
+MODELS = {**graphspn_naive.MODELS, **graphspn_zero.MODELS, **graphspn_marg.MODELS, **graphspn_back.MODELS}
 
 
 if __name__ == '__main__':
@@ -17,7 +18,7 @@ if __name__ == '__main__':
     RDLogger.DisableLog('rdApp.*')
 
     dataset = 'qm9'
-    models = ['graphspn_zero_sort'] # MODELS.keys()
+    models = ['graphspn_back_none'] # MODELS.keys()
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'
@@ -36,10 +37,11 @@ if __name__ == '__main__':
         else:
             loader_trn, loader_val, loader_tst = datasets.load_dataset(hyperpars['dataset'], hyperpars['batch_size'], ohe=False)
 
-        if 'sort' in name:
-            loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset, permutation='canonical')
-        else:
-            loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset)
+        # if 'sort' in name:
+        #     loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset, permutation='canonical')
+        # else:
+        #     loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset)
+        loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset, permutation='canonical')
 
         path = utils.train(model, loader_trn, loader_val, smiles_trn, hyperpars, checkpoint_dir, trainepoch_dir)
         model = torch.load(path)

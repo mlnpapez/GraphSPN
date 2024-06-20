@@ -1,5 +1,5 @@
 import torch
-import graphspn
+import graphspn_naive
 import graphspn_zero
 import datasets
 from utils import *

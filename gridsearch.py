@@ -5,7 +5,7 @@ import torch
 import utils
 import subprocess
 import gridsearch_hyperpars
-import graphspn
+import graphspn_naive
 import graphspn_zero
 import graphspn_marg
 import datasets

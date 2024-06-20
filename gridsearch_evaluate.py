@@ -1,7 +1,6 @@
 import os
 from numpy import NaN
 import pandas as pd
-import graphspn
 
 from tqdm import tqdm
 from pylatex import Document, Package, NoEscape

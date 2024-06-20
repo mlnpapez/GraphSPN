@@ -1,5 +1,4 @@
 import math
-from numpy import arange
 import torch
 import torch.nn as nn
 import itertools
@@ -107,6 +106,7 @@ class GraphSPNZeroRand(GraphSPNZeroCore):
 
         # z = flatten_graph(xx, aa)
         # return self.network(z.to(self.device))
+
 
 class GraphSPNZeroSort(GraphSPNZeroCore):
     def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
