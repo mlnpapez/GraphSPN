@@ -214,7 +214,7 @@ def permute_dataset(loader, dataset, permutation='all'):
         pa = pa[:, pi]
 
         d['x'], d['a'] = px, pa
-        smls.append(Chem.MolToSmiles(graph_to_mol(px, pa, al)))
+        smls.append(Chem.MolToSmiles(graph_to_mol(px, pa, al))) # canonical=True ?
 
     return loader, smls
 

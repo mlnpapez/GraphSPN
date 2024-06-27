@@ -6,11 +6,16 @@ import graphspn_naive
 import graphspn_zero
 import graphspn_marg
 import graphspn_back
+import moflow
 
 from rdkit import RDLogger
 
 
-MODELS = {**graphspn_naive.MODELS, **graphspn_zero.MODELS, **graphspn_marg.MODELS, **graphspn_back.MODELS}
+MODELS = {**graphspn_naive.MODELS,
+          **graphspn_zero.MODELS,
+          **graphspn_marg.MODELS,
+          **graphspn_back.MODELS,
+          'moflow': moflow.MoFlow,}
 
 
 if __name__ == '__main__':
@@ -18,7 +23,7 @@ if __name__ == '__main__':
     RDLogger.DisableLog('rdApp.*')
 
     dataset = 'qm9'
-    models = ['graphspn_back_none'] # MODELS.keys()
+    models = ['graphspn_zero_none'] # MODELS.keys()
 
     checkpoint_dir = 'results/training/model_checkpoint/'
     trainepoch_dir = 'results/training/model_trainepoch/'

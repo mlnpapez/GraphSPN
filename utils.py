@@ -13,7 +13,10 @@ from tqdm import tqdm
 
 
 IGNORED_HYPERPARS = [
-    'atom_list'
+    'atom_list',
+    'mask_row_stride_list',
+    'mask_row_size_list',
+    'optimizer'
 ]
 
 VALENCY_LIST = {6:4, 7:3, 8:2, 9:1, 15:3, 16:2, 17:1, 35:1, 53:1}
@@ -28,8 +31,6 @@ def dict2str(d):
     return '_'.join([f'{key}={value}' for key, value in d.items() if key not in IGNORED_HYPERPARS])
 
 
-def atom_decoder(atom_list):
-    return {i: atom_list[i] for i in range(len(atom_list))}
 bond_encoder = {Chem.BondType.SINGLE: 0, Chem.BondType.DOUBLE: 1, Chem.BondType.TRIPLE: 2}
 bond_decoder = {0: Chem.BondType.SINGLE, 1: Chem.BondType.DOUBLE, 2: Chem.BondType.TRIPLE}
 
@@ -78,10 +79,9 @@ def radical_electrons_to_hydrogens(mol):
     return mol
 
 def valid_mol(mol):
-    smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
-    mol = Chem.MolFromSmiles(smiles) if mol is not None else None
-    if mol is not None and '.' not in Chem.MolToSmiles(mol, isomericSmiles=True):
-        return mol
+    _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, isomericSmiles=True)) if mol is not None else None
+    if _mol is not None and '.' not in Chem.MolToSmiles(_mol, isomericSmiles=True):
+        return _mol
     return None
 
 def isvalid(mol):
@@ -118,15 +118,18 @@ def mol_to_graph(mol, tensor_size, atom_list):
 def graph_to_mol(x, a, atom_list):
     mol = Chem.RWMol()
 
-    for i in range(len(x)):
-        if x[i].item() < len(atom_list):
-            mol.AddAtom(Chem.Atom(atom_decoder(atom_list)[x[i].item()]))
+    atoms_exist = x != len(atom_list)
+    x = x[atoms_exist]
+    a = a[atoms_exist, :][:, atoms_exist]
+
+    for atom in x:
+        mol.AddAtom(Chem.Atom(atom_list[atom.item()]))
 
     num_atoms = mol.GetNumAtoms()
 
     for i in range(num_atoms):
         for j in range(num_atoms):
-            if a[i, j].item() < 3 and i > j:
+            if i > j and a[i, j].item() < 3:
                 mol.AddBond(i, j, bond_decoder[a[i, j].item()])
 
                 flag, valence = valency(mol)
@@ -219,15 +222,18 @@ def evaluate_molecules(mols, smiles_gen, smiles_trn, max_mols_gen, return_unique
     ratio_unique = num_smiles_unique / num_valid_mols if num_valid_mols > 0 else 0.
     ratio_unique_abs = num_smiles_unique / num_mols
 
-    if return_unique == True: smiles_valid = smiles_unique
+    if return_unique == True:
+        smiles_valid = smiles_unique
+        num_valid_mols = num_smiles_unique
     mols_valid = [Chem.MolFromSmiles(s) for s in smiles_valid]
 
-    if num_mols == 0:
+    if num_valid_mols == 0:
         ratio_novel = 0.
+        ratio_novel_abs = 0.
     else:
-        novel = num_mols - sum([1 for mol in smiles_gen if mol in smiles_trn])
-        ratio_novel = novel / num_mols
-        ratio_novel_abs = novel / max_mols_gen
+        novel = num_valid_mols - sum([1 for mol in smiles_valid if mol in smiles_trn])
+        ratio_novel = novel / num_valid_mols
+        ratio_novel_abs = novel / num_mols
 
     if debug == True:
         print("Valid molecules: {}".format(ratio_valid))
@@ -291,13 +297,15 @@ def run_epoch(model, loader, optimizer=[], verbose=False):
     nll_sum = 0.
     for x in tqdm(loader, leave=False, disable=verbose):
         nll = -model.logpdf(x)
-        nll_sum += nll * len(x)
+        # nll_sum += nll * len(x)
+        nll_sum += nll
         if optimizer:
             optimizer.zero_grad()
             nll.backward()
             optimizer.step()
 
-    return (nll_sum / len(loader.dataset)).item()
+    # return (nll_sum / len(loader.dataset)).item()
+    return nll_sum.item()
 
 METRIC_TYPES = ['valid', 'unique', 'novel', 'score']
 
@@ -308,12 +316,12 @@ def train(model,
           hyperpars,
           checkpoint_dir,
           trainepoch_dir,
-          num_nonimproving_epochs=30,
+          num_nonimproving_epochs=200,
           verbose=False,
-          metric_type='score'
+          metric_type='ll_val'
     ):
     optimizer = optim.Adam(model.parameters(), **hyperpars['optimizer_hyperpars'])
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)
     # scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=5, T_mult=1, eta_min=1e-4)
 
 

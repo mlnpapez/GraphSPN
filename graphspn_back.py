@@ -170,9 +170,9 @@ class GraphSPNBackCore(nn.Module):
             nk_n,
             nk_e,
             mlp_decoder(nz,        nd_back,   nl, True),
-            mlp_decoder(nd_back//2, nd_n*nk_n, 2,  True),
-            # mlp_decoder(nd_back//2, nd_e*nk_e, 2,  True)
-            conv_decoder(nd_back//2, 128, out_channels=4, resblock=True, bias=True, learn_std=True)
+            mlp_decoder(nd_back//2, nd_n*nk_n, 4, True),
+            mlp_decoder(nd_back//2, nd_e*nk_e, 4, True)
+            # conv_decoder(nd_back//2, 32, out_channels=4, resblock=True, bias=True, learn_std=True)
         )
 
         self.network = ContinuousMixture(
