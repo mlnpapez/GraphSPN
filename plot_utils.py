@@ -1,3 +1,5 @@
+from utils import *
+
 from rdkit import Chem
 from rdkit.Chem import Draw, AllChem
 from rdkit.Chem.Draw import MolsToGridImage, rdMolDraw2D # , MolsMatrixToGridImage
@@ -59,6 +61,16 @@ def highlight_grid(smiles_mat, smarts_patts, fname="cond_mols", useSVG=False):
     else:    
         img.save(f'{fname}.png')
 
+def joint_grid(model, nrows, ncols, useSVG=False):
+    mols, smls = model.sample(10*nrows*ncols)
+    valid_mols = [mol for mol in mols if isvalid(mol)]
+    img = MolsToGridImage(valid_mols[:nrows*ncols], molsPerRow=ncols, subImgSize=(400, 400), useSVG=useSVG)
+    if useSVG:
+         with open('joint_mols.svg', 'w') as f:
+            img = img.replace("<rect style='opacity:1.0", "<rect style='opacity: 0")  # for transparent background
+            f.write(img)
+    else:    
+        img.save('joint_mols.png')
 
 if __name__ == "__main__":
     # slist = ['CC1=CC2=C(C=C1)C(=CN2CCN1CCOCC1)C(=O)C1=CC=CC2=C1C=CC=C2',
