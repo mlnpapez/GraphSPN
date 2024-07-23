@@ -21,7 +21,7 @@ def get_hit(mol, patt):
 
     return hit_ats, hit_bonds
 
-def highlight_grid(smiles_mat, smarts_patts, path="mol.png"):
+def highlight_grid(smiles_mat, smarts_patts, fname="cond_mols", useSVG=False):
     """Function plots aligned grid of molecules with highlited patterns.
     Parameters:
         mol (list[list[str]]): SMILE molecule to plot
@@ -48,11 +48,16 @@ def highlight_grid(smiles_mat, smarts_patts, path="mol.png"):
             hit_bonds.append(hit_bond)
 
     dopts = rdMolDraw2D.MolDrawOptions()
-    dopts.setHighlightColour((0,.9,.9,.8))
+    dopts.setHighlightColour((.0,.8,.9))
     dopts.highlightBondWidthMultiplier = 15
     img = MolsToGridImage(mols, highlightAtomLists=hit_ats, highlightBondLists=hit_bonds, 
-                        molsPerRow=molsPerRow, subImgSize=(400,400), drawOptions=dopts)
-    img.save(path)
+                        molsPerRow=molsPerRow, subImgSize=(400,400), drawOptions=dopts, useSVG=useSVG)
+    if useSVG:
+         with open(f'{fname}.svg', 'w') as f:
+            img = img.replace("<rect style='opacity:1.0", "<rect style='opacity: 0")  # for transparent background
+            f.write(img)
+    else:    
+        img.save(f'{fname}.png')
 
 
 if __name__ == "__main__":
