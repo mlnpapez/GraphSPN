@@ -6,11 +6,20 @@ from utils import *
 from plot_utils import *
 
 from rdkit import Chem, rdBase
-
 rdBase.DisableLog("rdApp.error")
 
 def conditional_sample(model, xx, aa, submol_size, num_samples):
-    # NOTE: one obs only
+    """Conditionaly genera a molecule given some other (smaller) molecule.
+    Parameters:
+        model: GraphSPN model
+        xx (torch.Tensor): feature tensor [1, max_size]
+        aa (torch.Tensor): adjacency tensor [1, max_size^2]
+        submol_size (int): number of atoms of molecule made from 'xx' and 'aa'
+        num_samples (int): number of molecules to sample
+    Returns:
+        mol, sml (tuple[list, list]): conditionaly generated molecules\smiles
+    """
+    # NOTE: accepts only one observation as an input
     max_size = xx.shape[-1]
     marginalize(model.network, model.nd_nodes, max_size-submol_size, submol_size)
     z = flatten_graph(xx, aa)
@@ -32,6 +41,7 @@ def create_observed_mol(smile='C1OCC=C1', dataset_name='qm9'):
     return xx.unsqueeze(0), aa.unsqueeze(0), mol_size
 
 if __name__ == "__main__":
+    # trained model path
     model_path = "results/training/model_checkpoint/qm9/graphspn_zero_sort/dataset=qm9_model=graphspn_zero_sort_nd_n=9_nk_n=5_nk_e=4_nl=2_nr=40_ns=40_ni=40_device=cuda_optimizer=adam_lr=0.05_betas=[0.9, 0.82]_num_epochs=20_batch_size=1000_seed=0.pt"
 
     model = torch.load(model_path)
