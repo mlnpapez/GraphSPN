@@ -6,7 +6,7 @@ import qmcpy
 from torch.distributions import Categorical
 from typing import Callable, Optional, List
 from abc import abstractmethod
-from utils import *
+from models.spn_utils import *
 
 # the continuous mixture model and the convolutional decoder based on the following implementation: https://github.com/AlCorreia/cm-tpm
 
@@ -43,30 +43,25 @@ def mlp_decoder(nd_in: int, nd_out: int, nl: int, batch_norm: bool, final_act: O
 def conv_decoder(latent_dim: int, nf: int, batch_norm: Optional[bool]=True, final_act: Optional[nn.Module]=None, bias: Optional[bool]=False, learn_std: Optional[bool]=False, resblock: Optional[bool]=False, out_channels: Optional[int]=None):
     decoder = nn.Sequential()   
     decoder.append(nn.Unflatten(1, (latent_dim, 1, 1)))
-    decoder.append(nn.ConvTranspose2d(latent_dim, nf * 4, 2, 2, 0, bias=bias))
+    decoder.append(nn.ConvTranspose2d(latent_dim, nf * 4, 4, 2, 0,    bias=bias))
     if batch_norm:
         decoder.append(nn.BatchNorm2d(nf * 4))
     decoder.append(nn.LeakyReLU())
     if resblock:
         decoder.append(ResBlockOord(nf * 4))
-
-    decoder.append(nn.ConvTranspose2d(nf * 4, nf * 2, 2, 2, 0, bias=bias))
+    decoder.append(nn.ConvTranspose2d(nf * 4,     nf * 2, 4, 2, 0,    bias=bias))
     if batch_norm:
         decoder.append(nn.BatchNorm2d(nf * 2))
     decoder.append(nn.LeakyReLU())
-
     if resblock:
         decoder.append(ResBlockOord(nf * 2))
-
-    decoder.append(nn.ConvTranspose2d(nf * 2, nf, 2, 2, 0, bias=bias))
+    decoder.append(nn.ConvTranspose2d(nf * 2,         nf, 4, 2, 0,    bias=bias))
     if batch_norm:
         decoder.append(nn.BatchNorm2d(nf))
     decoder.append(nn.LeakyReLU())
-
     if resblock:
         decoder.append(ResBlockOord(nf))
-
-    decoder.append(nn.ConvTranspose2d(nf, out_channels, 2, 2, 4, 1, bias=bias))
+    decoder.append(nn.ConvTranspose2d(nf,   out_channels, 4, 2, 4, 0, bias=bias))
 
     if final_act is not None:
         decoder.append(final_act)
@@ -158,20 +153,20 @@ class ContinuousMixture(nn.Module):
 
 
 class GraphSPNBackCore(nn.Module):
-    def __init__(self, nd_n: int, nk_n: int, nk_e: int, nz: int, nl: int, nb: int, nc: int, atom_list: List[int], device: Optional[str]='cuda'):
+    def __init__(self, nd_n: int, nk_n: int, nk_e: int, nz: int, nl: int, nb: int, nc: int, device: Optional[str]='cuda'):
         super().__init__()
         nd_e = nd_n**2
-        self.nd_nodes = nd_n
-        self.nd_edges = nd_e
-        nd_back = 512
+        self.nk_node = nk_n
+        self.nk_edge = nk_e
+        nd_back = 256
 
         decoder = CategoricalDecoder(
             nd_n,
             nk_n,
             nk_e,
-            mlp_decoder(nz,        nd_back,   nl, True),
-            mlp_decoder(nd_back//2, nd_n*nk_n, 4, True),
-            mlp_decoder(nd_back//2, nd_e*nk_e, 4, True)
+            mlp_decoder(nz,         nd_back,  nl, True),
+            mlp_decoder(nd_back//2, nd_n*nk_n, 2, True),
+            mlp_decoder(nd_back//2, nd_e*nk_e, 2, True)
             # conv_decoder(nd_back//2, 32, out_channels=4, resblock=True, bias=True, learn_std=True)
         )
 
@@ -182,33 +177,31 @@ class GraphSPNBackCore(nn.Module):
             device=device
         )
 
-        self.atom_list = atom_list
-
         self.device = device
         self.to(device)
 
     @abstractmethod
-    def forward(self, xx, aa):
+    def forward(self, x, a):
         pass
 
-    def logpdf(self, x):
-        return self(x).mean()
+    def logpdf(self, x, a):
+        return self(x, a).mean()
 
     def sample(self, num_samples):
         x, a = self.network.sample(num_samples)
         x = x.to(torch.int).cpu()
         a = a.to(torch.int).cpu()
-        return create_mols(x, a, self.atom_list)
+        x, a = cat2ohe(x, a, self.nk_node, self.nk_edge)
+        return x, a
 
 
 class GraphSPNBackNone(GraphSPNBackCore):
-    def __init__(self, nd_n: int, nk_n: int, nk_e: int, nz: int, nl: int, nb: int, nc: int, atom_list: List[int], device: Optional[str]='cuda'):
-        super().__init__(nd_n, nk_n, nk_e, nz, nl, nb, nc, atom_list, device)
+    def __init__(self, nd_n: int, nk_n: int, nk_e: int, nz: int, nl: int, nb: int, nc: int, device: Optional[str]='cuda'):
+        super().__init__(nd_n, nk_n, nk_e, nz, nl, nb, nc, device)
 
-    def forward(self, x):
-        xx = x['x']
-        aa = x['a']
-        return self.network(xx, aa)
+    def forward(self, x, a):
+        x, a = ohe2cat(x, a)
+        return self.network(x, a)
 
 
 MODELS = {

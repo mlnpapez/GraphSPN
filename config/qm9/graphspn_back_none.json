@@ -5,16 +5,10 @@
         "nd_n": 9,
         "nk_n": 5,
         "nk_e": 4,
-        "nz": 8,
+        "nz": 32,
         "nl": 4,
         "nb": 16384,
         "nc": 2,
-        "atom_list": [
-            6,
-            7,
-            8,
-            9
-        ],
         "device": "cuda"
     },
     "optimizer": "adam",

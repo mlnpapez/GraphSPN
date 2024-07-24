@@ -9,12 +9,6 @@
         "nr": 40,
         "ns": 40,
         "ni": 40,
-        "atom_list": [
-            6,
-            7,
-            8,
-            9
-        ],
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -25,7 +19,7 @@
             0.82
         ]
     },
-    "num_epochs": 20,
+    "num_epochs": 100,
     "batch_size": 1000,
     "seed": 0
 }

@@ -5,16 +5,17 @@ import itertools
 
 from abc import abstractmethod
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
-from utils import *
 from tqdm import tqdm
+from models.spn_utils import *
 
 
 class GraphSPNZeroCore(nn.Module):
-    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, device='cuda'):
         super().__init__()
         nd_e = nd_n**2
         self.nd_nodes = nd_n
-        self.nd_edges = nd_e
+        self.nk_nodes = nk_n
+        self.nk_edges = nk_e
 
         nd = nd_n + nd_e
         nk = max(nk_n, nk_e)
@@ -32,89 +33,81 @@ class GraphSPNZeroCore(nn.Module):
         self.network = EinsumNetwork.EinsumNetwork(graph, args)
         self.network.initialize()
 
-        self.atom_list = atom_list
-
         self.device = device
         self.to(device)
 
     @abstractmethod
-    def forward(self, xx, aa):
+    def _forward(self, x, a):
         pass
 
-    def logpdf(self, x):
-        return self(x).mean()
+    def forward(self, x, a):
+        x, a = ohe2cat(x, a)
+        return self._forward(x, a)
+
+    def logpdf(self, x, a):
+        return self(x, a).mean()
 
     def sample(self, num_samples):
         z = self.network.sample(num_samples).to(torch.int).cpu()
         x, a = unflatt_graph(z, self.nd_nodes, self.nd_nodes)
-        return create_mols(x, a, self.atom_list)
+        a[a == 4] = 3
+        return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
 
 class GraphSPNZeroNone(GraphSPNZeroCore):
-    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
-        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, device='cuda'):
+        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, device)
 
-    def forward(self, x):
-        xx = x['x']
-        aa = x['a']
-        z = flatten_graph(xx, aa)
-        return self.network(z.to(self.device))
+    def _forward(self, x, a):
+        return self.network(flatten_graph(x, a).to(self.device))
 
 
 class GraphSPNZeroFull(GraphSPNZeroCore):
-    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
-        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, device='cuda'):
+        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, device)
 
-    def forward(self, x):
-        xx = x['x']
-        aa = x['a']
+    def _forward(self, x, a):
         n = torch.tensor(math.factorial(self.nd_nodes))
-        l = torch.zeros(len(xx), device=self.device)
+        l = torch.zeros(len(x), device=self.device)
         for pi in tqdm(itertools.permutations(range(self.nd_nodes), self.nd_nodes), leave=False):
             with torch.no_grad():
-                px, pa = permute_graph(xx, aa, pi)
-            z = flatten_graph(px, pa)
-            l += (torch.exp(self.network(z.to(self.device)).squeeze() - torch.log(n)))
+                px, pa = permute_graph(x, a, pi)
+            l += (torch.exp(self.network(flatten_graph(px, pa).to(self.device)).squeeze() - torch.log(n)))
         return torch.log(l)
 
 
 class GraphSPNZeroRand(GraphSPNZeroCore):
-    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, np, atom_list, device='cuda'):
-        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, np, device='cuda'):
+        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, device)
 
         self.num_perms = np
         self.permutations = torch.stack([torch.randperm(nd_n) for _ in range(min(np, math.factorial(nd_n)))])
 
-    def forward(self, x):
-        xx = x['x']
-        aa = x['a']
-        l = torch.zeros(len(xx), min(self.num_perms, math.factorial(self.nd_nodes)), device=self.device)
-        for i, pi in enumerate(self.permutations):
-        # permutations = torch.stack([torch.randperm(self.nd_nodes) for _ in range(self.num_perms)])
-        # for i, pi in enumerate(permutations):
+    def _forward(self, x, a):
+        l = torch.zeros(len(x), min(self.num_perms, math.factorial(self.nd_nodes)), device=self.device)
+        # for i, pi in enumerate(self.permutations):
+        permutations = torch.stack([torch.randperm(self.nd_nodes) for _ in range(self.num_perms)])
+        for i, pi in enumerate(permutations):
             with torch.no_grad():
-                px, pa = permute_graph(xx, aa, pi)
-            z = flatten_graph(px, pa)
-            l[:, i] = self.network(z.to(self.device)).squeeze()
+                px, pa = permute_graph(x, a, pi)
+            l[:, i] = self.network(flatten_graph(px, pa).to(self.device)).squeeze()
         return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
-        # for i in range(len(xx)):
-        #     num_full = torch.sum(xx[i, :] != len(self.atom_list))
-        #     pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, self.nd_nodes)))
-        #     xx[i, :] = xx[i, pi]
-        #     aa[i, :, :] = aa[i, pi, :]
-        #     aa[i, :, :] = aa[i, :, pi]
 
-        # z = flatten_graph(xx, aa)
-        # return self.network(z.to(self.device))
+        # for i in range(len(x)):
+        #     num_full = torch.sum(x[i, :] != self.nk_nodes)
+        #     pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, self.nd_nodes)))
+        #     x[i, :] = x[i, pi]
+        #     a[i, :, :] = a[i, pi, :]
+        #     a[i, :, :] = a[i, :, pi]
+
+        # return self.network(flatten_graph(x, a).to(self.device))
 
 
 class GraphSPNZeroSort(GraphSPNZeroCore):
-    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
-        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device)
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, device='cuda'):
+        super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, device)
 
-    def forward(self, x):
-        xx = x['x']
-        aa = x['a']
+    def _forward(self, x, a):
         # with torch.no_grad():
             # xx, pi = xx.sort(dim=1)
             # for i, p in enumerate(pi):
@@ -147,15 +140,13 @@ class GraphSPNZeroSort(GraphSPNZeroCore):
 
             # Best to impose the canonical ordering outside
 
-        z = flatten_graph(xx, aa)
-        return self.network(z.to(self.device))
+        return self.network(flatten_graph(x, a).to(self.device))
 
 
 class GraphSPNZerokAry(nn.Module):
-    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, arity, atom_list, device='cuda'):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, arity, device='cuda'):
         super().__init__()
         self.nd_nodes = nd_n
-        self.nd_edges = nd_n**2
         self.arity = arity
 
         nd = arity + arity**2
@@ -176,26 +167,22 @@ class GraphSPNZerokAry(nn.Module):
         self.network = EinsumNetwork.EinsumNetwork(graph, args)
         self.network.initialize()
 
-        self.atom_list = atom_list
-
         self.device = device
         self.to(device)
 
-    def forward(self, x):
-        xx = x['x']
-        aa = x['a']
+    def forward(self, x, a):
+        x, a = ohe2cat(x, a)
         n = math.comb(self.nd_nodes, self.arity)
-        l = torch.zeros(len(xx), n, device=self.device)
+        l = torch.zeros(len(x), n, device=self.device)
         for i, pi in enumerate(itertools.combinations(range(self.nd_nodes), self.arity)):
             with torch.no_grad():
-                px, pa = permute_graph(xx, aa, pi)
-            z = flatten_graph(px, pa)
-            l[:, i] = self.network(z.to(self.device)).squeeze()
+                px, pa = permute_graph(x, a, pi)
+            l[:, i] = self.network(flatten_graph(px, pa).to(self.device)).squeeze()
 
         return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(n))
 
-    def logpdf(self, x):
-        return self(x).mean()
+    def logpdf(self, x, a):
+        return self(x, a).mean()
 
     def sample(self, num_samples):
         num_sub_graphs = 20
@@ -215,13 +202,15 @@ class GraphSPNZerokAry(nn.Module):
                 for j in range(self.arity):
                     a[:, sub_graphs[g][i], sub_graphs[g][j]] = z[g, :, i, j+1]
 
-        return create_mols(x, a, self.atom_list)
+        return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
 
 class GraphSPNZeroFree(nn.Module):
-    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
+    def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, device='cuda'):
         super().__init__()
         self.nd_nodes = nd_n
+        self.nk_nodes = nk_n
+        self.nk_edges = nk_e
 
         nd = nd_n + 1
         nk = max(nk_n, nk_e)
@@ -239,30 +228,30 @@ class GraphSPNZeroFree(nn.Module):
         self.network = EinsumNetwork.EinsumNetwork(graph, args)
         self.network.initialize()
 
-        self.atom_list = atom_list
-
         self.device = device
         self.to(device)
 
-    def forward(self, x):
-        n = len(x['x'])
-        xx = x['x'].view(n*self.nd_nodes)
-        aa = x['a'].view(n*self.nd_nodes, self.nd_nodes)
+    def forward(self, x, a):
+        n = len(x)
+        x, a = ohe2cat(x, a)
+
+        xx = x.view(n*self.nd_nodes)
+        aa = a.view(n*self.nd_nodes, self.nd_nodes)
 
         z = torch.cat((xx.unsqueeze(1), aa), dim=1)
 
         return self.network(z.to(self.device))
 
-    def logpdf(self, x):
-        return self(x).mean()
+    def logpdf(self, x, a):
+        return self(x, a).mean()
 
     def sample(self, num_samples):
         z = self.network.sample(num_samples*self.nd_nodes).to(torch.int).cpu()
 
         x = z[:, 0 ].view(-1, self.nd_nodes)
         a = z[:, 1:].view(-1, self.nd_nodes, self.nd_nodes)
-
-        return create_mols(x, a, self.atom_list)
+        a[a == 4] = 3
+        return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
 MODELS = {
     'graphspn_zero_none': GraphSPNZeroNone,
