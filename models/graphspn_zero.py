@@ -3,10 +3,11 @@ import torch
 import torch.nn as nn
 import itertools
 
+from tqdm import tqdm
 from abc import abstractmethod
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
-from tqdm import tqdm
-from models.spn_utils import *
+from utils.graphs import flatten_graph, unflatt_graph, permute_graph
+from models.spn_utils import ohe2cat, cat2ohe
 
 
 class GraphSPNZeroCore(nn.Module):
@@ -50,7 +51,7 @@ class GraphSPNZeroCore(nn.Module):
     def sample(self, num_samples):
         z = self.network.sample(num_samples).to(torch.int).cpu()
         x, a = unflatt_graph(z, self.nd_nodes, self.nd_nodes)
-        a[a == 4] = 3
+        a[a > 3] = 3
         return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
 
@@ -250,7 +251,7 @@ class GraphSPNZeroFree(nn.Module):
 
         x = z[:, 0 ].view(-1, self.nd_nodes)
         a = z[:, 1:].view(-1, self.nd_nodes, self.nd_nodes)
-        a[a == 4] = 3
+        a[a > 3] = 3
         return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
 MODELS = {

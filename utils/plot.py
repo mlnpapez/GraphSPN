@@ -1,7 +1,8 @@
 import torch
 from rdkit import Chem
-from rdkit.Chem import Draw, AllChem
-from rdkit.Chem.Draw import MolsToGridImage, rdMolDraw2D # , MolsMatrixToGridImage
+from rdkit.Chem import AllChem
+from rdkit.Chem.Draw import MolsToGridImage, rdMolDraw2D
+from utils.molecular import isvalid
 
 def marginalize(network, nd_nodes, num_empty, num_full):
     with torch.no_grad():

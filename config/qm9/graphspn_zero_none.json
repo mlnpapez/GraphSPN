@@ -19,7 +19,7 @@
             0.82
         ]
     },
-    "num_epochs": 100,
+    "num_epochs": 2,
     "batch_size": 1000,
     "seed": 0
 }

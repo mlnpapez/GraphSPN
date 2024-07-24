@@ -5,7 +5,7 @@ import torch.nn as nn
 from abc import abstractmethod
 from einsum import Graph, EinsumNetwork, ExponentialFamilyArray
 from torch.distributions import Categorical
-from models.spn_utils import *
+from models.spn_utils import cat2ohe, ohe2cat
 
 
 class GraphSPNNaiveCore(nn.Module):
@@ -309,7 +309,7 @@ class GraphSPNNaiveCatE(nn.Module):
         z = z.view(-1, self.nd_nodes+1, self.nd_nodes)
         x = z[:, 0 , :]
         a = z[:, 1:, :]
-        a[a == 4] = 3
+        a[a > 3] = 3
         return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
 
@@ -355,7 +355,7 @@ class GraphSPNNaiveCatF(nn.Module):
         z = z.view(-1, self.nd_nodes+1, self.nd_nodes)
         x = z[:, 0 , :]
         a = z[:, 1:, :]
-        a[a == 4] = 3
+        a[a > 3] = 3
         return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
 
@@ -406,7 +406,7 @@ class GraphSPNNaiveCatG(nn.Module):
         m = torch.tril(torch.ones(num_samples, self.nd_nodes, self.nd_nodes, dtype=torch.bool), diagonal=-1)
         a = torch.zeros(num_samples, self.nd_nodes, self.nd_nodes, dtype=torch.int)
         a[m] = l.reshape(num_samples*self.nd_edges)
-        a[a == 4] = 3
+        a[a > 3] = 3
         return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
 

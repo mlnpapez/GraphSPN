@@ -117,34 +117,6 @@ def isvalid(mol):
     else:
         return False
 
-# def create_graphs(mols, tensor_size, atom_list):
-#     n = len(mols)
-#     x = torch.zeros(n, tensor_size, dtype=torch.int8)
-#     a = torch.zeros(n, tensor_size, tensor_size, dtype=torch.int8)
-
-#     for i, mol in enumerate(mols):
-#         x[i, :], a[i, :, :] = mol_to_graph(mol, tensor_size, atom_list)
-
-#     return x, a
-
-def permute_graph(xx, aa, pi):
-    px = xx[:, pi]
-    pa = aa[:, pi, :]
-    pa = pa[:, :, pi]
-    return px, pa
-
-def flatten_graph(xx, aa, dim=2):
-    n = xx.shape[1]
-    z = torch.cat((xx.unsqueeze(dim), aa), dim=dim)
-    return z.view(-1, n + n**2)
-
-def unflatt_graph(z, nd_nodes, num_full):
-    z = z.view(-1, nd_nodes, nd_nodes+1)
-    x = z[:, 0:num_full, 0 ]
-    a = z[:, 0:num_full, 1:num_full+1]
-    return x, a
-
-
 
 if __name__ == '__main__':
     # 10 samples from the QM9 dataset

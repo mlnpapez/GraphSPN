@@ -6,10 +6,10 @@ import numpy as np
 from scipy import linalg as la
 from torch.nn import functional as F
 
+# the code is based on the original implementation https://github.com/calvin-zcx/moflow
+
 
 logabs = lambda x: torch.log(torch.abs(x))
-
-
 
 
 class ActNorm(nn.Module):

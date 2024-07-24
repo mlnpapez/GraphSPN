@@ -20,7 +20,7 @@
         ],
         "weight_decay": 1e-4
     },
-    "num_epochs": 200,
+    "num_epochs": 2,
     "batch_size": 1000,
     "seed": 0
 }

@@ -1,9 +1,9 @@
 import torch
-import graphspn_naive
-import graphspn_zero
-import datasets
-from utils import *
-from plot_utils import *
+from utils.datasets import MOLECULAR_DATASETS
+from utils.molecular import isvalid, mol2g, gs2mols
+from utils.plot import highlight_grid, joint_grid, marginalize
+from utils.graphs import flatten_graph, unflatt_graph
+
 
 from rdkit import Chem, rdBase
 rdBase.DisableLog("rdApp.error")
@@ -29,14 +29,15 @@ def conditional_sample(model, xx, aa, submol_size, num_samples):
         z = z.expand(num_samples, -1)
         sample = model.network.sample(x=z.to(torch.float)).cpu()
         xx_sample, aa_sample = unflatt_graph(sample, model.nd_nodes, model.nd_nodes)
-        mol_sample, sml_sample = create_mols(xx_sample.int(), aa_sample.int(), model.atom_list)
+        mol_sample = gs2mols(xx_sample.int(), aa_sample.int(), model.atom_list)
+        sml_sample = [Chem.MolToSmiles(mol, kekuleSmiles=True) for mol in mol_sample]
 
     return mol_sample, sml_sample
 
 def create_observed_mol(smile='C1OCC=C1', dataset_name='qm9'):
-    dataset_info = datasets.MOLECULAR_DATASETS[dataset_name]
+    dataset_info = MOLECULAR_DATASETS[dataset_name]
     mol = Chem.MolFromSmiles(smile)
-    xx, aa = mol_to_graph(mol, dataset_info['nd'], dataset_info['atom_list'])
+    xx, aa = mol2g(mol, dataset_info['nd'], dataset_info['atom_list'])
     mol_size = len(mol.GetAtoms())  # number of atoms in molecule
     return xx.unsqueeze(0), aa.unsqueeze(0), mol_size
 

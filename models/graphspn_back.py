@@ -4,9 +4,9 @@ import torch.nn as nn
 import qmcpy
 
 from torch.distributions import Categorical
-from typing import Callable, Optional, List
+from typing import Callable, Optional
 from abc import abstractmethod
-from models.spn_utils import *
+from models.spn_utils import ohe2cat, cat2ohe
 
 # the continuous mixture model and the convolutional decoder based on the following implementation: https://github.com/AlCorreia/cm-tpm
 

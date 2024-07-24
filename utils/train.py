@@ -121,7 +121,7 @@ def evaluate(
         smiles_trn,
         hyperpars,
         evaluation_dir,
-        num_samples=10000,
+        num_samples=4000,
         compute_nll=True
     ):
     model.eval()
