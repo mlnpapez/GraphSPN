@@ -9,17 +9,6 @@
         "nr": 20,
         "ns": 40,
         "ni": 40,
-        "atom_list": [
-            6,
-            7,
-            8,
-            9,
-            15,
-            16,
-            17,
-            35,
-            53
-        ],
         "device": "cuda"
     },
     "optimizer": "adam",

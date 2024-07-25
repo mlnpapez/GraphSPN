@@ -14,12 +14,6 @@
         "num_pieces": [
             2
         ],
-        "atom_list": [
-            6,
-            7,
-            8,
-            9
-        ],
         "device": "cpu"
     },
     "optimizer": "adam",

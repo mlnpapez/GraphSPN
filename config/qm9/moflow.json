@@ -18,19 +18,13 @@
         "mask_row_size_list": [1],
         "mask_row_stride_list": [1],
         "af_n": true,
-        "atom_list": [
-            6,
-            7,
-            8,
-            9
-        ],
         "device": "cuda"
     },
     "optimizer": "adam",
     "optimizer_hyperpars": {
         "lr": 0.001
     },
-    "num_epochs": 200,
+    "num_epochs": 100,
     "batch_size": 256,
     "seed": 0
 }

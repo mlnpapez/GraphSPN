@@ -3,13 +3,13 @@ from utils.molecular import mols2gs, gs2mols, correct, getvalid
 
 
 
-def get_vmols(x, a, atom_list, correct_mols=False):
+def get_vmols(x, a, atom_list, correct_mols=False, canonical=True):
     if correct_mols == True:
-        valid = [ correct(mol) for mol in gs2mols(x, a, atom_list)]
+        valid = [correct(mol) for mol in gs2mols(x, a, atom_list)]
     else:
-        valid = [getvalid(mol) for mol in gs2mols(x, a, atom_list)]
+        valid = [getvalid(mol, canonical) for mol in gs2mols(x, a, atom_list)]
     vmols = [mol for mol in valid if mol is not None]
-    vsmls = [Chem.MolToSmiles(mol, kekuleSmiles=True) for mol in vmols]
+    vsmls = [Chem.MolToSmiles(mol, kekuleSmiles=True, canonical=canonical) for mol in vmols]
 
     return vmols, vsmls
 
@@ -37,10 +37,10 @@ def metric_s(ratio_v, ratio_u, ratio_n):
     return ratio_v*ratio_u*ratio_n
 
 
-def evaluate_molecules(x, a, tsmls, atom_list, correct_mols=False, metrics_only=False, affix=''):
+def evaluate_molecules(x, a, tsmls, atom_list, correct_mols=False, metrics_only=False, canonical=True, affix=''):
     num_mols = len(x)
 
-    vmols, vsmls = get_vmols(x, a, atom_list, correct_mols)
+    vmols, vsmls = get_vmols(x, a, atom_list, correct_mols, canonical)
 
     ratio_v = metric_v(vmols, num_mols)
     ratio_u, ratio_u_abs = metric_u(vsmls, num_mols)

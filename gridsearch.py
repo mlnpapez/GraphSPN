@@ -5,19 +5,28 @@ import torch
 import utils
 import subprocess
 import gridsearch_hyperpars
-import graphspn_naive
-import graphspn_zero
-import graphspn_marg
-import datasets
 
 from rdkit import RDLogger
+from utils.datasets import MOLECULAR_DATASETS, load_dataset
+from utils.train import train, evaluate
+from utils.evaluate import count_parameters
+
+from models import graphspn_prel
+from models import graphspn_zero
+from models import graphspn_marg
+from models import graphspn_back
+from models import moflow
+
+MODELS = {**graphspn_prel.MODELS,
+          **graphspn_zero.MODELS,
+          **graphspn_marg.MODELS,
+          **graphspn_back.MODELS,
+          'moflow': moflow.MoFlow,}
+
 
 CHECKPOINT_DIR = 'results/linesearch/model_checkpoint/'
-TRAINEPOCH_DIR = 'results/linesearch/model_trainepoch/'
 EVALUATION_DIR = 'results/linesearch/model_evaluation/'
 OUTPUTLOGS_DIR = 'results/linesearch/model_outputlogs/'
-
-MODELS = {**graphspn_zero.MODELS, **graphspn_marg.MODELS}
 
 
 def unsupervised(dataset, name, par_buffer):
@@ -25,29 +34,28 @@ def unsupervised(dataset, name, par_buffer):
     RDLogger.DisableLog('rdApp.*')
 
     hyperpars = par_buffer[int(os.environ["SLURM_ARRAY_TASK_ID"])]
-
-    if 'deq' in name:
-        loader_trn, loader_val, loader_tst = datasets.load_dataset(dataset, hyperpars['batch_size'], ohe=True)
-    else:
-        loader_trn, loader_val, loader_tst = datasets.load_dataset(dataset, hyperpars['batch_size'], ohe=False)
-
-    if 'sort' in name:
-        loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset, permutation='canonical')
-    else:
-        loader_trn, smiles_trn = datasets.permute_dataset(loader_trn, dataset)
+    hyperpars['atom_list'] = MOLECULAR_DATASETS[dataset]['atom_list']
+    hyperpars['max_atoms'] = MOLECULAR_DATASETS[dataset]['max_atoms']
 
     model = MODELS[name](**hyperpars['model_hyperpars'])
-
     print(dataset)
     print(json.dumps(hyperpars, indent=4))
     print(model)
-    print(f'The number of parameters is {utils.count_parameters(model)}.')
+    print(f'The number of parameters is {count_parameters(model)}.')
 
-    path = utils.train(model, loader_trn, loader_val, smiles_trn, hyperpars, CHECKPOINT_DIR, TRAINEPOCH_DIR, verbose=True)
+    if 'sort' in name:
+        canonical = True
+    else:
+        canonical = False
+
+    loader_trn, loader_val, loader_tst = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=[0.8, 0.1, 0.1], canonical=canonical)
+    smiles_trn = [x['s'] for x in loader_trn.dataset]
+
+    path = train(model, loader_trn, loader_val, smiles_trn, hyperpars, CHECKPOINT_DIR, verbose=True)
     model = torch.load(path)
-    metric = utils.evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, EVALUATION_DIR, compute_nll=False)
+    metrics = evaluate(model, loader_trn, loader_val, loader_tst, smiles_trn, hyperpars, EVALUATION_DIR, compute_nll=False, canonical=canonical)
 
-    print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metric.items()))
+    print("\n".join(f'{key:<20}{value:>10.4f}' for key, value in metrics.items()))
 
 
 def submit_job(dataset, model, par_buffer, device, max_sub):
@@ -97,7 +105,7 @@ if __name__ == "__main__":
     all_models = ['graphspn_marg_none', 'graphspn_marg_rand', 'graphspn_marg_sort', 'graphspn_marg_kary', 'graphspn_marg_free']
     gpu_models = MODELS.keys()
 
-    for dataset, attributes in datasets.MOLECULAR_DATASETS.items():
+    for dataset, attributes in MOLECULAR_DATASETS.items():
         print(dataset)
         for model in all_models:
             print(model)

@@ -10,12 +10,6 @@
         "ns": 20,
         "ni": 20,
         "arity": 5,
-        "atom_list": [
-            6,
-            7,
-            8,
-            9
-        ],
         "device": "cuda"
     },
     "optimizer": "adam",

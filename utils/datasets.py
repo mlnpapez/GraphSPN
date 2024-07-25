@@ -6,8 +6,9 @@ import pandas
 from rdkit import Chem
 from tqdm import tqdm
 
-from utils.molecular import mol2g
-
+from utils.molecular import mol2g, g2mol
+from utils.graphs import permute_graph
+from utils.evaluate import evaluate_molecules
 
 MOLECULAR_DATASETS = {
     'qm9': {
@@ -25,7 +26,7 @@ MOLECULAR_DATASETS = {
 }
 
 
-def download_qm9(dir='data/'):
+def download_qm9(dir='data/', canonical=True):
     if os.path.isdir(dir) != True:
         os.makedirs(dir)
 
@@ -35,12 +36,12 @@ def download_qm9(dir='data/'):
     print('Downloading and preprocessing the QM9 dataset.')
 
     urllib.request.urlretrieve(url, f'{file}.csv')
-    preprocess(file, 'smile', 'penalized_logp', MOLECULAR_DATASETS['qm9']['nd'], MOLECULAR_DATASETS['qm9']['atom_list'])
+    preprocess(file, 'smile', 'penalized_logp', MOLECULAR_DATASETS['qm9']['max_atoms'], MOLECULAR_DATASETS['qm9']['atom_list'], canonical)
     os.remove(f'{file}.csv')
 
     print('Done.')
 
-def download_zinc250k(dir='data/'):
+def download_zinc250k(dir='data/', canonical=True):
     if os.path.isdir(dir) != True:
         os.makedirs(dir)
 
@@ -50,13 +51,13 @@ def download_zinc250k(dir='data/'):
     print('Downloading and preprocessing the Zinc250k dataset.')
 
     urllib.request.urlretrieve(url, f'{file}.csv')
-    preprocess(file, 'smile', 'penalized_logp', MOLECULAR_DATASETS['zinc250k']['nd'], MOLECULAR_DATASETS['zinc250k']['atom_list'])
+    preprocess(file, 'smile', 'penalized_logp', MOLECULAR_DATASETS['zinc250k']['nd'], MOLECULAR_DATASETS['zinc250k']['atom_list'], canonical)
     os.remove(f'{file}.csv')
 
     print('Done.')
 
 
-def preprocess(path, smile_col, prop_name, max_atom, atom_list):
+def preprocess(path, smile_col, prop_name, max_atom, atom_list, canonical=True):
     input_df = pandas.read_csv(f'{path}.csv', sep=',', dtype='str')
     smls_list = list(input_df[smile_col])
     prop_list = list(input_df[prop_name])
@@ -66,12 +67,21 @@ def preprocess(path, smile_col, prop_name, max_atom, atom_list):
         mol = Chem.MolFromSmiles(smls)
         Chem.Kekulize(mol)
 
-        x, a = mol2g(mol, max_atom, atom_list)
+        if canonical == True:
+            x, a = mol2g(mol, max_atom, atom_list)
+            s = Chem.MolToSmiles(mol, kekuleSmiles=True)
+            name = f'{path}_sort.pt'
+        else:
+            x, a = mol2g(mol, max_atom, atom_list)
+            num_full = mol.GetNumAtoms()
+            x, a = permute_graph(x, a, torch.cat((torch.randperm(num_full), torch.arange(num_full, max_atom))))
+            s = Chem.MolToSmiles(g2mol(x, a, atom_list), kekuleSmiles=True, canonical=False)
+            name = f'{path}_perm.pt'
         y = torch.tensor([float(prop)])
 
-        data_list.append({'x': x, 'a': a, 'n': mol.GetNumAtoms(), 'y': y, 's': Chem.MolToSmiles(mol, kekuleSmiles=True)})
+        data_list.append({'x': x, 'a': a, 'n': mol.GetNumAtoms(), 's': s, 'y': y})
 
-    torch.save(data_list, f'{path}.pt')
+    torch.save(data_list, name)
 
 class DictDataset(torch.utils.data.Dataset):
     def __init__(self, data):
@@ -83,8 +93,11 @@ class DictDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.data)
 
-def load_dataset(name, batch_size, raw=False, seed=0, split=None, dir='data/'):
-    x = DictDataset(torch.load(f'{dir}{name}.pt'))
+def load_dataset(name, batch_size, raw=False, seed=0, split=None, dir='data/', canonical=True):
+    if canonical == True:
+        x = DictDataset(torch.load(f'{dir}{name}_sort.pt'))
+    else:
+        x = DictDataset(torch.load(f'{dir}{name}_perm.pt'))
 
     if split is not None:
         generator = torch.Generator()
@@ -105,57 +118,24 @@ def load_dataset(name, batch_size, raw=False, seed=0, split=None, dir='data/'):
         else:
             return torch.utils.data.DataLoader(x, batch_size=batch_size, num_workers=2, shuffle=True,  pin_memory=True)
 
-
 if __name__ == '__main__':
     download = False
     dataset = 'qm9'
+    sort = True
+    type='perm'
+
     if download:
         if dataset == 'qm9':
-            download_qm9()
+            download_qm9(sort=sort)
         elif dataset == 'zinc250k':
-            download_zinc250k()
+            download_zinc250k(sort=sort)
         else:
             os.error('Unsupported dataset.')
 
-    loader_trn, loader_val, loader_tst = load_dataset(dataset, 100, split=[0.8, 0.1, 0.1])
+    loader_trn, loader_val, loader_tst = load_dataset(dataset, 100, split=[0.8, 0.1, 0.1], type=type)
 
-    for i, x in enumerate(loader_trn):
-        print(i)
-        print(x['x'][0])
-        print(x['a'][0])
-        print(x['s'][0])
+    x = [e['x'] for e in loader_trn.dataset]
+    a = [e['a'] for e in loader_trn.dataset]
+    s = [e['s'] for e in loader_trn.dataset]
 
-    # x_trn, x_val, x_tst = load_dataset(dataset, 0, raw=True)
-
-    # smiles = [x['s'] for x in x_trn]
-    # print(smiles)
-
-
-
-
-# def permute_dataset(loader, dataset, permutation='all'):
-#     nd = MOLECULAR_DATASETS[dataset]['nd']
-#     al = MOLECULAR_DATASETS[dataset]['atom_list']
-
-#     single = torch.randperm(nd)
-
-#     smls = []
-#     for d in loader.dataset.data:
-#         xx, aa = d['x'], d['a']
-
-#         num_full = torch.sum(xx != len(al))
-#         if permutation == 'all':
-#             pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, nd)))
-#         elif permutation == 'single':
-#             pi = torch.cat((single[0:num_full], torch.arange(num_full, nd)))
-#         elif permutation == 'canonical':
-#             pi = torch.arange(nd) # TODO: This is not very efficient.
-
-#         px = xx[pi]
-#         pa = aa[pi, :]
-#         pa = pa[:, pi]
-
-#         d['x'], d['a'] = px, pa
-#         smls.append(Chem.MolToSmiles(graph_to_mol(px, pa, al))) # canonical=True ?
-
-#     return loader, smls
+    print(evaluate_molecules(x, a, s, MOLECULAR_DATASETS[dataset]['atom_list'], metrics_only=True, canonical=False))

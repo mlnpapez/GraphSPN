@@ -103,16 +103,16 @@ def correct(mol):
 
     return mol
 
-def getvalid(mol):
-    _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, kekuleSmiles=True)) if mol is not None else None
-    if _mol is not None and '.' not in Chem.MolToSmiles(_mol, kekuleSmiles=True):
+def getvalid(mol, canonical=True):
+    _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, kekuleSmiles=True, canonical=canonical)) if mol is not None else None
+    if _mol is not None and '.' not in Chem.MolToSmiles(_mol, kekuleSmiles=True, canonical=canonical):
         return _mol
     else:
         return None
 
-def isvalid(mol):
-    _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, kekuleSmiles=True)) if mol is not None else None
-    if _mol is not None and '.' not in Chem.MolToSmiles(_mol, kekuleSmiles=True):
+def isvalid(mol, canonical=True):
+    _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, kekuleSmiles=True, canonical=canonical)) if mol is not None else None
+    if _mol is not None and '.' not in Chem.MolToSmiles(_mol, kekuleSmiles=True, canonical=canonical):
         return True
     else:
         return False

@@ -122,16 +122,17 @@ def evaluate(
         hyperpars,
         evaluation_dir,
         num_samples=4000,
-        compute_nll=True
+        compute_nll=True,
+        canonical=True
     ):
     model.eval()
 
     x_sam, a_sam = model.sample(num_samples)
     x_res, a_res = resample_invalid_mols(model, num_samples, hyperpars['atom_list'], hyperpars['max_atoms'])
 
-    mols_res_f, _, metrics_res_f = evaluate_molecules(x_sam, a_sam, smiles_trn, hyperpars['atom_list'], correct_mols=False, affix='res_f_')
-    mols_res_t, _, metrics_res_t = evaluate_molecules(x_res, a_res, smiles_trn, hyperpars['atom_list'], correct_mols=False, affix='res_t_')
-    mols_cor_t, _, metrics_cor_t = evaluate_molecules(x_sam, a_sam, smiles_trn, hyperpars['atom_list'], correct_mols=True,  affix='cor_t_')
+    mols_res_f, _, metrics_res_f = evaluate_molecules(x_sam, a_sam, smiles_trn, hyperpars['atom_list'], correct_mols=False, affix='res_f_', canonical=canonical)
+    mols_res_t, _, metrics_res_t = evaluate_molecules(x_res, a_res, smiles_trn, hyperpars['atom_list'], correct_mols=False, affix='res_t_', canonical=canonical)
+    mols_cor_t, _, metrics_cor_t = evaluate_molecules(x_sam, a_sam, smiles_trn, hyperpars['atom_list'], correct_mols=True,  affix='cor_t_', canonical=canonical)
 
     if compute_nll == True:
         nll_trn_approx = run_epoch(model, loader_trn)

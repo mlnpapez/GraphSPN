@@ -1,7 +1,7 @@
 import torch
 
 def permute_graph(xx, aa, pi):
-    px = xx[:, pi]
+    px = xx[pi, :]
     pa = aa[:, pi, :]
     pa = pa[:, :, pi]
     return px, pa
