@@ -14,16 +14,14 @@ def mol2x(mol, max_atom, atom_list):
     num_atom = len(atom_list)
     atom_tensor = torch.zeros(max_atom, num_atom, dtype=torch.int8)
     for atom_idx, atom in enumerate(mol.GetAtoms()):
-        atom_type = atom.GetAtomicNum()
-        atom_tensor[atom_idx, atom_list.index(atom_type)] = 1
+        atom_tensor[atom_idx, atom_list.index(atom.GetAtomicNum())] = 1
     atom_tensor[~torch.sum(atom_tensor, 1, dtype=torch.bool), num_atom-1] = 1
     return atom_tensor
 
 def mol2a(mol, max_atom):
     bond_tensor = torch.zeros(4, max_atom, max_atom, dtype=torch.int8)
     for bond in mol.GetBonds():
-        bond_type = bond.GetBondType()
-        c = BOND_ENCODER[bond_type]
+        c = BOND_ENCODER[bond.GetBondType()]
         i = bond.GetBeginAtomIdx()
         j = bond.GetEndAtomIdx()
         bond_tensor[c, i, j] = 1.0
@@ -48,7 +46,7 @@ def g2mol(x, a, atom_list):
 
     bonds = torch.argmax(a, axis=0)
     bonds = bonds[atoms_exist, :][:, atoms_exist]
-    for start, end in zip(*torch.nonzero(bonds != 3, as_tuple=True)):
+    for start, end in zip(*torch.nonzero(bonds < 3, as_tuple=True)):
         if start > end:
             mol.AddBond(int(start), int(end), BOND_DECODER[bonds[start, end].item()])
             flag, valence = valency(mol)
@@ -103,16 +101,31 @@ def correct(mol):
 
     return mol
 
+# def getvalid(mol, canonical=True):
+#     _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, canonical=canonical)) if mol is not None else None
+#     if _mol is not None and '.' not in Chem.MolToSmiles(_mol, canonical=canonical):
+#         Chem.Kekulize(_mol)
+#         return _mol
+#     else:
+#         return None
+
 def getvalid(mol, canonical=True):
-    _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, kekuleSmiles=True, canonical=canonical)) if mol is not None else None
-    if _mol is not None and '.' not in Chem.MolToSmiles(_mol, kekuleSmiles=True, canonical=canonical):
-        return _mol
+    sml = Chem.MolToSmiles(mol, canonical=canonical)
+    if Chem.MolFromSmiles(sml) is not None and mol is not None and '.' not in sml:
+        return mol
     else:
         return None
 
+# def isvalid(mol, canonical=True):
+#     _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, canonical=canonical)) if mol is not None else None
+#     if _mol is not None and '.' not in Chem.MolToSmiles(_mol, canonical=canonical):
+#         return True
+#     else:
+#         return False
+
 def isvalid(mol, canonical=True):
-    _mol = Chem.MolFromSmiles(Chem.MolToSmiles(mol, kekuleSmiles=True, canonical=canonical)) if mol is not None else None
-    if _mol is not None and '.' not in Chem.MolToSmiles(_mol, kekuleSmiles=True, canonical=canonical):
+    sml = Chem.MolToSmiles(mol, canonical=canonical)
+    if Chem.MolFromSmiles(sml) is not None and mol is not None and '.' not in sml:
         return True
     else:
         return False

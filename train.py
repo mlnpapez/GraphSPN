@@ -45,10 +45,15 @@ if __name__ == '__main__':
         if 'sort' in name:
             canonical = True
         else:
-            canonical = False
+            canonical = True
 
         loader_trn, loader_val, loader_tst = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=[0.8, 0.1, 0.1], canonical=canonical)
-        smiles_trn = [x['s'] for x in loader_trn.dataset]
+        # smiles_trn = [x['s'] for x in loader_trn.dataset]
+        x = [x['x'] for x in loader_trn.dataset]
+        a = [x['a'] for x in loader_trn.dataset]
+        from utils.molecular import gs2mols
+        from rdkit import Chem
+        smiles_trn = [Chem.MolToSmiles(mol, canonical=canonical) for mol in gs2mols(x, a, hyperpars['atom_list'])]
 
         path = train(model, loader_trn, loader_val, smiles_trn, hyperpars, CHECKPOINT_DIR)
         model = torch.load(path)

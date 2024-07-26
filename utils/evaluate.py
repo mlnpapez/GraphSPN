@@ -82,13 +82,13 @@ def best_model(path):
     return df.loc[idx]['file_path'], df.loc[idx]['nll_val_approx']
 
 
-def resample_invalid_mols(model, num_samples, atom_list, max_atoms):
+def resample_invalid_mols(model, num_samples, atom_list, max_atoms, canonical=True):
     n = num_samples
     mols = []
 
     while len(mols) != num_samples:
         x, a = model.sample(n)
-        valid = [getvalid(mol) for mol in gs2mols(x, a, atom_list)]
+        valid = [getvalid(mol, canonical) for mol in gs2mols(x, a, atom_list)]
         mols.extend([mol for mol in valid if mol is not None])
         n = num_samples - len(mols)
 
