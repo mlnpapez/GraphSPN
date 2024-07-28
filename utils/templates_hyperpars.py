@@ -1,12 +1,12 @@
 import os
 import json
 
-from datasets import MOLECULAR_DATASETS
+from utils.datasets import MOLECULAR_DATASETS
 
 NUM_EPOCHS = 40
 
 
-def template_naive_cat_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_cat_a(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_a",
@@ -22,7 +22,6 @@ def template_naive_cat_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
         "ns_e": ns,
         "ni_n": ni,
         "ni_e": ni,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -35,10 +34,9 @@ def template_naive_cat_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_cat_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_cat_b(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_b",
@@ -53,7 +51,6 @@ def template_naive_cat_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
         "ni_n": ni,
         "ni_e": ni,
         "num_pieces": num_pieces,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -66,10 +63,9 @@ def template_naive_cat_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_cat_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_cat_c(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_c",
@@ -85,7 +81,6 @@ def template_naive_cat_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
         "ns_e": ns,
         "ni_n": ni,
         "ni_e": ni,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -98,10 +93,9 @@ def template_naive_cat_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_cat_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_cat_d(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_d",
@@ -118,7 +112,6 @@ def template_naive_cat_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
         "ns_e": ns,
         "ni_n": ni,
         "ni_e": ni,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -131,10 +124,9 @@ def template_naive_cat_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_cat_e(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_cat_e(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_e",
@@ -146,7 +138,6 @@ def template_naive_cat_e(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -159,10 +150,9 @@ def template_naive_cat_e(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_cat_f(dataset, nd, nk, atom_list,                     ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_cat_f(dataset, nd, nk,                     ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_f",
@@ -173,7 +163,6 @@ def template_naive_cat_f(dataset, nd, nk, atom_list,                     ns=10, 
         "ns": ns,
         "ni": ni,
         "num_pieces": num_pieces,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -186,10 +175,9 @@ def template_naive_cat_f(dataset, nd, nk, atom_list,                     ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_cat_g(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_cat_g(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_g",
@@ -201,7 +189,6 @@ def template_naive_cat_g(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -214,10 +201,9 @@ def template_naive_cat_g(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_cat_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_cat_h(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_h",
@@ -234,7 +220,6 @@ def template_naive_cat_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
         "ns_e": ns,
         "ni_n": ni,
         "ni_e": ni,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -247,10 +232,9 @@ def template_naive_cat_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_deq_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_deq_a(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_a",
@@ -268,7 +252,6 @@ def template_naive_deq_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
         "ni_e": ni,
         "dc_n": dc,
         "dc_e": dc,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -281,10 +264,9 @@ def template_naive_deq_a(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_deq_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1, num_pieces=[2], batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_deq_b(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.1, num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_b",
@@ -301,7 +283,6 @@ def template_naive_deq_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
         "num_pieces": num_pieces,
         "dc_n": dc,
         "dc_e": dc,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -314,10 +295,9 @@ def template_naive_deq_b(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_deq_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_deq_c(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_c",
@@ -335,7 +315,6 @@ def template_naive_deq_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
         "ni_e": ni,
         "dc_n": dc,
         "dc_e": dc,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -348,10 +327,9 @@ def template_naive_deq_c(dataset, nd, nk, atom_list,        nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_deq_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_deq_d(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_d",
@@ -370,7 +348,6 @@ def template_naive_deq_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
         "ni_e": ni,
         "dc_n": dc,
         "dc_e": dc,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -383,10 +360,9 @@ def template_naive_deq_d(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_naive_deq_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_naive_deq_h(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_h",
@@ -405,7 +381,6 @@ def template_naive_deq_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
         "ni_e": ni,
         "dc_n": dc,
         "dc_e": dc,
-        "atom_list": atom_list,
         "device": "cpu"
     },
     "optimizer": "adam",
@@ -418,24 +393,22 @@ def template_naive_deq_h(dataset, nd, nk, atom_list, nc=10, nl=2, nr=10, ns=10, 
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
 
 
-def template_zero_none(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_zero_none(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_none",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -448,10 +421,9 @@ def template_zero_none(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_zero_full(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0, num_max_atoms=999):
+def template_zero_full(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_full",
@@ -463,7 +435,6 @@ def template_zero_full(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -476,10 +447,9 @@ def template_zero_full(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_zero_rand(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_zero_rand(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_rand",
@@ -492,7 +462,6 @@ def template_zero_rand(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, np=
         "ns": ns,
         "ni": ni,
         "np": np,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -505,10 +474,9 @@ def template_zero_rand(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, np=
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_zero_sort(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_zero_sort(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_sort",
@@ -520,7 +488,6 @@ def template_zero_sort(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -533,10 +500,9 @@ def template_zero_sort(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_zero_kary(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_zero_kary(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_kary",
@@ -549,7 +515,6 @@ def template_zero_kary(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, ari
         "ns": ns,
         "ni": ni,
         "arity": arity,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -562,10 +527,9 @@ def template_zero_kary(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, ari
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_zero_free(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_zero_free(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_free",
@@ -577,7 +541,6 @@ def template_zero_free(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -590,12 +553,11 @@ def template_zero_free(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
 
 
-def template_marg_none(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_marg_none(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_none",
@@ -607,7 +569,6 @@ def template_marg_none(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -620,10 +581,9 @@ def template_marg_none(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_marg_full(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0, num_max_atoms=999):
+def template_marg_full(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_full",
@@ -635,7 +595,6 @@ def template_marg_full(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -648,10 +607,9 @@ def template_marg_full(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_marg_rand(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_marg_rand(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_rand",
@@ -664,7 +622,6 @@ def template_marg_rand(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, np=
         "ns": ns,
         "ni": ni,
         "np": np,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -677,10 +634,9 @@ def template_marg_rand(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, np=
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_marg_sort(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_marg_sort(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_sort",
@@ -692,7 +648,6 @@ def template_marg_sort(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -705,10 +660,9 @@ def template_marg_sort(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_marg_kary(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_marg_kary(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_kary",
@@ -721,7 +675,6 @@ def template_marg_kary(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, ari
         "ns": ns,
         "ni": ni,
         "arity": arity,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -734,10 +687,9 @@ def template_marg_kary(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5, ari
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
 }
-def template_marg_free(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0, num_max_atoms=999):
+def template_marg_free(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_free",
@@ -749,7 +701,6 @@ def template_marg_free(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
         "nr": nr,
         "ns": ns,
         "ni": ni,
-        "atom_list": atom_list,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -762,8 +713,69 @@ def template_marg_free(dataset, nd, nk, atom_list, nl=2, nr=10, ns=10, ni=5,    
     },
     "num_epochs": NUM_EPOCHS,
     "batch_size": batch_size,
-    "seed": seed,
-    "num_max_atoms": num_max_atoms
+    "seed": seed
+}
+
+
+def template_back_none(dataset, max_atoms, max_types, atom_list, nl=2, nz=32, nb=16384, nc=2, batch_size=1000, lr=0.001, seed=0):
+    return {
+    "dataset": dataset,
+    "model": "graphspn_back_none",
+    "model_hyperpars": {
+        "nd_n": max_atoms,
+        "nk_n": max_types,
+        "nk_e": 4,
+        "nz": nz,
+        "nl": nl,
+        "nb": nb,
+        "nc": nc,
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": lr,
+        "betas": [
+            0.8,
+            0.7
+        ],
+        "weight_decay": 1e-4
+    },
+    "num_epochs": NUM_EPOCHS,
+    "batch_size": batch_size,
+    "seed": seed
+}
+
+def template_moflow(dataset, max_atoms, max_types, atom_list, nf_e=10, nf_n=27, hcha_e=[128, 128], hgnn_n=[64], hlin_n=[128, 64], sq_e=3, batch_size=256, lr=0.001, seed=0):
+    return {
+    "dataset": dataset,
+    "model": "moflow",
+    "model_hyperpars": {
+        "nk_e": 4,
+        "nf_e": nf_e,
+        "nb_e": 1,
+        "sq_e": sq_e,
+        "hcha_e": hcha_e,
+        "af_e": "true",
+        "lu_e": 1,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
+        "nf_n": nf_n,
+        "nb_n": 1,
+        "hgnn_n": hgnn_n,
+        "hlin_n": hlin_n,
+        "mask_row_size_list": [1],
+        "mask_row_stride_list": [1],
+        "af_n": "true",
+        "device": "cuda"
+    },
+    "optimizer": "adam",
+    "optimizer_hyperpars": {
+        "lr": lr,
+        "weight_decay": 1e-4
+    },
+    "num_epochs": NUM_EPOCHS,
+    "batch_size": batch_size,
+    "seed": seed
 }
 
 
@@ -794,6 +806,10 @@ HYPERPARS_TEMPLATES = [
     template_marg_rand,
     template_marg_sort,
     template_marg_kary,
+
+    template_back_none,
+
+    template_moflow,
 ]
 
 

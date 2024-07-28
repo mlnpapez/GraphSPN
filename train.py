@@ -28,7 +28,7 @@ if __name__ == '__main__':
     RDLogger.DisableLog('rdApp.*')
 
     dataset = 'qm9'
-    names = ['moflow'] # MODELS.keys()
+    names = ['graphspn_back_none'] # MODELS.keys()
 
     for name in names:
         with open(f'config/{dataset}/{name}.json', 'r') as f:

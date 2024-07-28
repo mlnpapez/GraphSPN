@@ -16,6 +16,8 @@ LEGENDS = {
     'graphspn_zero_sort': 'zsort',
     'graphspn_zero_kary': 'zkary',
     'graphspn_zero_free': 'zfree',
+    'graphspn_back_none': 'bnone',
+    'moflow': 'moflow',
 }
 
 # https://tikz.dev/pgfplots/reference-markers
@@ -32,6 +34,8 @@ MARKS = {
     'graphspn_zero_sort': 'halfcircle',
     'graphspn_zero_kary': 'diamond',
     'graphspn_zero_free': 'pentagon',
+    'graphspn_back_none': 'otimes',
+    'moflow': 'oplus',
 }
 
 def nextgrouplot(models, ydata, ylabel, evaluation_dir):

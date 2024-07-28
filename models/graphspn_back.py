@@ -158,15 +158,15 @@ class GraphSPNBackCore(nn.Module):
         nd_e = nd_n**2
         self.nk_node = nk_n
         self.nk_edge = nk_e
-        nd_back = 256
+        nd_back = 512
 
         decoder = CategoricalDecoder(
             nd_n,
             nk_n,
             nk_e,
             mlp_decoder(nz,         nd_back,  nl, True),
-            mlp_decoder(nd_back//2, nd_n*nk_n, 2, True),
-            mlp_decoder(nd_back//2, nd_e*nk_e, 2, True)
+            mlp_decoder(nd_back//2, nd_n*nk_n, 3, True),
+            mlp_decoder(nd_back//2, nd_e*nk_e, 3, True)
             # conv_decoder(nd_back//2, 32, out_channels=4, resblock=True, bias=True, learn_std=True)
         )
 

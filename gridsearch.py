@@ -8,7 +8,7 @@ import gridsearch_hyperpars
 
 from rdkit import RDLogger
 from utils.datasets import MOLECULAR_DATASETS, load_dataset
-from utils.train import train, evaluate
+from utils.train import train, evaluate, dict2str, flatten_dict
 from utils.evaluate import count_parameters
 
 from models import graphspn_prel
@@ -46,7 +46,7 @@ def unsupervised(dataset, name, par_buffer):
     if 'sort' in name:
         canonical = True
     else:
-        canonical = False
+        canonical = True
 
     loader_trn, loader_val = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=None, canonical=canonical)
     smiles_trn = [x['s'] for x in loader_trn.dataset]
@@ -102,7 +102,15 @@ def submit_job(dataset, model, par_buffer, device, max_sub):
 if __name__ == "__main__":
     par_buffer = []
     # all_models = [k for k in MODELS.keys() if k not in ['graphspn_zero_full', 'graphspn_marg_full']]
-    all_models = ['graphspn_marg_none', 'graphspn_marg_rand', 'graphspn_marg_sort', 'graphspn_marg_kary', 'graphspn_marg_free']
+    all_models = [
+        # 'graphspn_zero_none',
+        # 'graphspn_zero_rand',
+        # 'graphspn_zero_sort',
+        # 'graphspn_zero_kary',
+        # 'graphspn_zero_free',
+        # 'graphspn_back_none',
+        'moflow'
+    ]
     gpu_models = MODELS.keys()
 
     for dataset, attributes in MOLECULAR_DATASETS.items():
@@ -121,7 +129,7 @@ if __name__ == "__main__":
             for hyperpars in gridsearch_hyperpars.GRIDS[model](attributes):
                 hyperpars['model_hyperpars']['device'] = device
 
-                path = EVALUATION_DIR + f'metrics/{dataset}/{model}/' + utils.dict2str(utils.flatten_dict(hyperpars)) + '.csv'
+                path = EVALUATION_DIR + f'metrics/{dataset}/{model}/' + dict2str(flatten_dict(hyperpars)) + '.csv'
                 if not os.path.isfile(path):
                     par_buffer.append(hyperpars)
 

@@ -12,7 +12,9 @@ IGNORED_HYPERPARS = [
     'atom_list',
     'mask_row_stride_list',
     'mask_row_size_list',
-    'optimizer'
+    'optimizer',
+    'af_e',
+    'af_e'
 ]
 
 

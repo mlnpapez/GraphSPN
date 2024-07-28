@@ -14,16 +14,16 @@ from utils.evaluate import evaluate_molecules
 MOLECULAR_DATASETS = {
     'qm9': {
         'dataset': 'qm9',
-        'max_types': 5,
         'max_atoms': 9,
+        'max_types': 5,
         'atom_list': [6, 7, 8, 9, 0]
     },
-    'zinc250k': {
-        'dataset': 'zinc250k',
-        'max_types': 10,
-        'max_atoms': 38,
-        'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53, 0]
-    }
+    # 'zinc250k': {
+    #     'dataset': 'zinc250k',
+    #     'max_atoms': 38,
+    #     'max_types': 10,
+    #     'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53, 0]
+    # }
 }
 
 
