@@ -1,4 +1,5 @@
 import os
+import json
 import torch
 import urllib
 import pandas
@@ -99,24 +100,25 @@ def load_dataset(name, batch_size, raw=False, seed=0, split=None, dir='data/', c
     else:
         x = DictDataset(torch.load(f'{dir}{name}_perm.pt'))
 
-    if split is not None:
-        generator = torch.Generator()
-        generator.manual_seed(seed)
-        x_trn, x_val, x_tst = torch.utils.data.random_split(x, split, generator=generator)
+    if split is None:
+        with open(f'{dir}i_val_{name}.json') as f:
+            i_val = json.load(f)
+        i_trn = [t for t in range(len(x)) if t not in i_val]
 
-        if raw == True:
-            return x_trn, x_val, x_tst
-        else:
-            loader_trn = torch.utils.data.DataLoader(x_trn, batch_size=batch_size, num_workers=2, shuffle=True,  pin_memory=True)
-            loader_val = torch.utils.data.DataLoader(x_val, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True)
-            loader_tst = torch.utils.data.DataLoader(x_tst, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True)
-
-            return loader_trn, loader_val, loader_tst
+        x_trn = torch.utils.data.Subset(x, i_trn)
+        x_val = torch.utils.data.Subset(x, i_val)
     else:
-        if raw == True:
-            return x
-        else:
-            return torch.utils.data.DataLoader(x, batch_size=batch_size, num_workers=2, shuffle=True,  pin_memory=True)
+        torch.manual_seed(seed)
+        x_trn, x_val = torch.utils.data.random_split(x, split)
+
+    if raw == True:
+        return x_trn, x_val
+    else:
+        loader_trn = torch.utils.data.DataLoader(x_trn, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True)
+        loader_val = torch.utils.data.DataLoader(x_val, batch_size=batch_size, num_workers=2, shuffle=False, pin_memory=True)
+
+        return loader_trn, loader_val
+
 
 if __name__ == '__main__':
     download = False
@@ -132,7 +134,7 @@ if __name__ == '__main__':
         else:
             os.error('Unsupported dataset.')
 
-    loader_trn, loader_val, loader_tst = load_dataset(dataset, 100, split=[0.8, 0.1, 0.1], type=type)
+    loader_trn, loader_val = load_dataset(dataset, 100, split=[0.8, 0.2], canonical=type)
 
     x = [e['x'] for e in loader_trn.dataset]
     a = [e['a'] for e in loader_trn.dataset]

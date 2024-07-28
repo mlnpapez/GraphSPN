@@ -71,7 +71,7 @@ def train(
         scheduler.step()
         model.eval()
 
-        x_sam, a_sam = model.sample(2000)
+        x_sam, a_sam = model.sample(1000)
         metrics = evaluate_molecules(x_sam, a_sam, smiles_trn, hyperpars['atom_list'], metrics_only=True)
         metrics_str = f'v={metrics["valid"]:.2f}, u={metrics["unique"]:.2f}, n={metrics["novel"]:.2f}, s={metrics["score"]:.2f}'
 
@@ -117,7 +117,6 @@ def evaluate(
         model,
         loader_trn,
         loader_val,
-        loader_tst,
         smiles_trn,
         hyperpars,
         evaluation_dir,
@@ -137,11 +136,9 @@ def evaluate(
     if compute_nll == True:
         nll_trn_approx = run_epoch(model, loader_trn)
         nll_val_approx = run_epoch(model, loader_val)
-        nll_tst_approx = run_epoch(model, loader_tst)
         metrics_neglogliks = {
             'nll_trn_approx': nll_trn_approx,
-            'nll_val_approx': nll_val_approx,
-            'nll_tst_approx': nll_tst_approx
+            'nll_val_approx': nll_val_approx
         }
     else:
         metrics_neglogliks = {}

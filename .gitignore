@@ -1,5 +1,6 @@
 __pycache__
-data
+data/qm9_perm.pt
+data/qm9_sort.pt
 results
 einsum
 cms
