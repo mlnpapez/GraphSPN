@@ -73,6 +73,7 @@ class GraphSPNZeroFull(GraphSPNZeroCore):
         for pi in tqdm(itertools.permutations(range(self.nd_nodes), self.nd_nodes), leave=False):
             with torch.no_grad():
                 px, pa = permute_graph(x, a, pi)
+                px, pa = ohe2cat(px, pa)
             l += (torch.exp(self.network(flatten_graph(px, pa).to(self.device)).squeeze() - torch.log(n)))
         return torch.log(l)
 
@@ -91,6 +92,7 @@ class GraphSPNZeroRand(GraphSPNZeroCore):
         for i, pi in enumerate(permutations):
             with torch.no_grad():
                 px, pa = permute_graph(x, a, pi)
+                px, pa = ohe2cat(px, pa)
             l[:, i] = self.network(flatten_graph(px, pa).to(self.device)).squeeze()
         return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
 
@@ -172,12 +174,12 @@ class GraphSPNZerokAry(nn.Module):
         self.to(device)
 
     def forward(self, x, a):
-        x, a = ohe2cat(x, a)
-        n = math.comb(self.nd_nodes, self.arity)
+        n = math.perm(self.nd_nodes, self.arity)
         l = torch.zeros(len(x), n, device=self.device)
-        for i, pi in enumerate(itertools.combinations(range(self.nd_nodes), self.arity)):
+        for i, pi in enumerate(itertools.permutations(range(self.nd_nodes), self.arity)):
             with torch.no_grad():
                 px, pa = permute_graph(x, a, pi)
+                px, pa = ohe2cat(px, pa)
             l[:, i] = self.network(flatten_graph(px, pa).to(self.device)).squeeze()
 
         return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(n))
@@ -186,12 +188,12 @@ class GraphSPNZerokAry(nn.Module):
         return self(x, a).mean()
 
     def sample(self, num_samples):
-        num_sub_graphs = 20
+        num_sub_graphs = 9
         x = torch.randint(0, self.nk_nodes, (num_samples, self.nd_nodes),                dtype=torch.int)
         a = torch.randint(0, self.nk_edges, (num_samples, self.nd_nodes, self.nd_nodes), dtype=torch.int)
 
-        n = math.comb(self.nd_nodes, self.arity)
-        sub_graphs = list(itertools.combinations(range(self.nd_nodes), self.arity))
+        n = math.perm(self.nd_nodes, self.arity)
+        sub_graphs = list(itertools.permutations(range(self.nd_nodes), self.arity))
         sub_graphs = [sub_graphs[i] for i in torch.randint(n, (num_sub_graphs,)).tolist()]
 
         z = self.network.sample(num_sub_graphs*num_samples).to(torch.int).cpu()

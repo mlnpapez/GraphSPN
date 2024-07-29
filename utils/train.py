@@ -54,7 +54,7 @@ def train(
         checkpoint_dir,
         num_nonimproving_epochs=200,
         verbose=False,
-        metric_type='ll_val'
+        metric_type='score'
     ):
     optimizer = optim.Adam(model.parameters(), **hyperpars['optimizer_hyperpars'])
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=200, gamma=0.1)

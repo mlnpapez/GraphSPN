@@ -18,12 +18,12 @@ MOLECULAR_DATASETS = {
         'max_types': 5,
         'atom_list': [6, 7, 8, 9, 0]
     },
-    # 'zinc250k': {
-    #     'dataset': 'zinc250k',
-    #     'max_atoms': 38,
-    #     'max_types': 10,
-    #     'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53, 0]
-    # }
+    'zinc250k': {
+        'dataset': 'zinc250k',
+        'max_atoms': 38,
+        'max_types': 10,
+        'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53, 0]
+    }
 }
 
 
@@ -52,7 +52,7 @@ def download_zinc250k(dir='data/', canonical=True):
     print('Downloading and preprocessing the Zinc250k dataset.')
 
     urllib.request.urlretrieve(url, f'{file}.csv')
-    preprocess(file, 'smile', 'penalized_logp', MOLECULAR_DATASETS['zinc250k']['nd'], MOLECULAR_DATASETS['zinc250k']['atom_list'], canonical)
+    preprocess(file, 'smile', 'penalized_logp', MOLECULAR_DATASETS['zinc250k']['max_atoms'], MOLECULAR_DATASETS['zinc250k']['atom_list'], canonical)
     os.remove(f'{file}.csv')
 
     print('Done.')
@@ -122,19 +122,18 @@ def load_dataset(name, batch_size, raw=False, seed=0, split=None, dir='data/', c
 
 if __name__ == '__main__':
     download = False
-    dataset = 'qm9'
-    sort = True
-    type='perm'
+    dataset = 'zinc250k'
+    canonical = False
 
     if download:
         if dataset == 'qm9':
-            download_qm9(sort=sort)
+            download_qm9(canonical=canonical)
         elif dataset == 'zinc250k':
-            download_zinc250k(sort=sort)
+            download_zinc250k(canonical=canonical)
         else:
             os.error('Unsupported dataset.')
 
-    loader_trn, loader_val = load_dataset(dataset, 100, split=[0.8, 0.2], canonical=type)
+    loader_trn, loader_val = load_dataset(dataset, 100, split=[0.8, 0.2], canonical=canonical)
 
     x = [e['x'] for e in loader_trn.dataset]
     a = [e['a'] for e in loader_trn.dataset]

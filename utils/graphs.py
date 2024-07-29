@@ -1,9 +1,9 @@
 import torch
 
 def permute_graph(xx, aa, pi):
-    px = xx[pi, :]
-    pa = aa[:, pi, :]
-    pa = pa[:, :, pi]
+    px = xx[..., pi, :]
+    pa = aa[..., :, pi, :]
+    pa = pa[..., :, :, pi]
     return px, pa
 
 def flatten_graph(xx, aa, dim=2):

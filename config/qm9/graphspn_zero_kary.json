@@ -9,7 +9,7 @@
         "nr": 10,
         "ns": 20,
         "ni": 20,
-        "arity": 5,
+        "arity": 2,
         "device": "cuda"
     },
     "optimizer": "adam",

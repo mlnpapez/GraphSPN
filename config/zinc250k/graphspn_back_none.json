@@ -6,9 +6,9 @@
         "nk_n": 10,
         "nk_e": 4,
         "nz": 16,
-        "nl": 4,
+        "nl": 2,
         "nb": 1024,
-        "nc": 2,
+        "nc": 32,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -21,6 +21,6 @@
         "weight_decay": 1e-4
     },
     "num_epochs": 50,
-    "batch_size": 1000,
+    "batch_size": 128,
     "seed": 0
 }

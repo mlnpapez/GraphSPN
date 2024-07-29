@@ -1,6 +1,8 @@
 __pycache__
 data/qm9_perm.pt
 data/qm9_sort.pt
+data/zinc250k_perm.pt
+data/zinc250k_sort.pt
 results
 einsum
 cms
