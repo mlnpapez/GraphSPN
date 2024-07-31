@@ -6,21 +6,21 @@
         "nk_n": 10,
         "nk_e": 4,
         "nz": 16,
-        "nl": 2,
-        "nb": 1024,
-        "nc": 32,
+        "nl": 10,
+        "nb": 16384,
+        "nc": 4,
         "device": "cuda"
     },
     "optimizer": "adam",
     "optimizer_hyperpars": {
-        "lr": 0.001,
+        "lr": 0.01,
         "betas": [
-            0.9,
-            0.999
+            0.8,
+            0.7
         ],
         "weight_decay": 1e-4
     },
     "num_epochs": 50,
-    "batch_size": 128,
+    "batch_size": 256,
     "seed": 0
 }

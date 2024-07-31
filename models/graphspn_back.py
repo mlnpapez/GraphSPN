@@ -8,7 +8,7 @@ from typing import Callable, Optional
 from abc import abstractmethod
 from models.spn_utils import ohe2cat, cat2ohe
 
-# the continuous mixture model and the convolutional decoder based on the following implementation: https://github.com/AlCorreia/cm-tpm
+# the continuous mixture model and the convolutional decoder are based on the following implementation: https://github.com/AlCorreia/cm-tpm
 
 
 class ResBlockOord(nn.Module):
@@ -105,23 +105,22 @@ class CategoricalDecoder(nn.Module):
         return h_node, h_edge
 
     def forward(self, x_node: torch.Tensor, x_edge: torch.Tensor, z: torch.Tensor, num_chunks: Optional[int]=None):
-        z_chunks = tuple([z]) if num_chunks is None else z.chunk(num_chunks, dim=0)
-        log_prob = []
+        i_chunks = torch.arange(len(z)).chunk(num_chunks)
+        log_prob = torch.zeros(len(x_node), len(z), device=self.device)
         x_edge = x_edge.view(-1, self.nd_edge)
-        for z_chunk in z_chunks:
-            logit_node, logit_edge = self.network(z_chunk.to(self.device))
-            logit_edge = torch.movedim(logit_edge, 1, -1)
-            logit_node = logit_node.view(-1, self.nd_node, self.nk_node)
-            logit_edge = logit_edge.view(-1, self.nd_edge, self.nk_edge)
-            log_prob_node = Categorical(logits=logit_node).log_prob(x_node.to(self.device).unsqueeze(1).float())
-            log_prob_edge = Categorical(logits=logit_edge).log_prob(x_edge.to(self.device).unsqueeze(1).float())
-            log_prob.append(torch.cat([log_prob_node, log_prob_edge], dim=2))
-        log_prob = torch.cat(log_prob, dim=1)
-        return log_prob.sum(dim=2)
+        x_node = x_node.to(self.device).unsqueeze(1).float()
+        x_edge = x_edge.to(self.device).unsqueeze(1).float()
+        for i_chunk in i_chunks:
+            logit_node, logit_edge = self.network(z[i_chunk, :].to(self.device)) # (chunk_size, nd_nodes * nk_nodes), (chunk_size, nd_nodes^2 * nk_edges)
+            logit_node = logit_node.view(-1, self.nd_node, self.nk_node) # (chunk_size, nd_nodes,   nk_nodes)
+            logit_edge = logit_edge.view(-1, self.nd_edge, self.nk_edge) # (chunk_size, nd_nodes^2, nk_edges)
+            log_prob_node = Categorical(logits=logit_node).log_prob(x_node).sum(dim=2) # (batch_size, chunk_size, nd_nodes)
+            log_prob_edge = Categorical(logits=logit_edge).log_prob(x_edge).sum(dim=2) # (batch_size, chunk_size, nd_nodes^2)
+            log_prob[:, i_chunk] = log_prob_node + log_prob_edge
+        return log_prob
 
     def sample(self, z: torch.Tensor, k: torch.Tensor):
         logit_node, logit_edge = self.network(z[k].to(self.device))
-        logit_edge = torch.movedim(logit_edge, 1, -1)
         logit_node = logit_node.view(-1, self.nd_node, self.nk_node)
         logit_edge = logit_edge.view(-1, self.nd_edge, self.nk_edge)
         x_node = Categorical(logits=logit_node).sample()
@@ -158,7 +157,7 @@ class GraphSPNBackCore(nn.Module):
         nd_e = nd_n**2
         self.nk_node = nk_n
         self.nk_edge = nk_e
-        nd_back = 128
+        nd_back = 1024
 
         decoder = CategoricalDecoder(
             nd_n,
