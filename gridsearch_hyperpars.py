@@ -180,6 +180,82 @@ def grid_naive_deq_h(dataset):
     return [template_naive_deq_h(*dataset.values(), *p) for p in list(grid)]
 
 
+def grid_zero_none(dataset):
+    nl = [1, 2, 3]
+    nr = [10, 40, 80]
+    ns = [10, 40, 80]
+    ni = [10, 40]
+    batch_size = [256]
+    lr = [0.05]
+    seed = [0, 1, 2, 3, 4]
+
+    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed)
+
+    return [template_zero_none(*dataset.values(), *p) for p in list(grid)]
+def grid_zero_full(dataset):
+    nl = [1, 2, 3]
+    nr = [10, 40, 80]
+    ns = [10, 40, 80]
+    ni = [10, 40]
+    batch_size = [256]
+    lr = [0.05]
+    seed = [0, 1, 2, 3, 4]
+
+    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed)
+
+    return [template_zero_full(*dataset.values(), *p) for p in list(grid)]
+def grid_zero_rand(dataset):
+    nl = [1, 2, 3]
+    nr = [10, 40, 80]
+    ns = [10, 40, 80]
+    ni = [10, 40]
+    np = [20]
+    batch_size = [256]
+    lr = [0.05]
+    seed = [0, 1, 2, 3, 4]
+
+    grid = itertools.product(nl, nr, ns, ni, np, batch_size, lr, seed)
+
+    return [template_zero_rand(*dataset.values(), *p) for p in list(grid)]
+def grid_zero_sort(dataset):
+    nl = [1, 2, 3]
+    nr = [10, 40, 80]
+    ns = [10, 40, 80]
+    ni = [10, 40]
+    batch_size = [256]
+    lr = [0.05]
+    seed = [0, 1, 2, 3, 4]
+
+    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed)
+
+    return [template_zero_sort(*dataset.values(), *p) for p in list(grid)]
+def grid_zero_kary(dataset):
+    nl = [1, 2, 3]
+    nr = [10, 40, 80]
+    ns = [10, 40, 80]
+    ni = [10, 40]
+    arity = [2]
+    batch_size = [256]
+    lr = [0.05]
+    seed = [0, 1, 2, 3, 4]
+
+    grid = itertools.product(nl, nr, ns, ni, arity, batch_size, lr, seed)
+
+    return [template_zero_kary(*dataset.values(), *p) for p in list(grid)]
+def grid_zero_free(dataset):
+    nl = [1, 2, 3]
+    nr = [10, 40, 80]
+    ns = [10, 40, 80]
+    ni = [10, 40]
+    batch_size = [256]
+    lr = [0.05]
+    seed = [0, 1, 2, 3, 4]
+
+    grid = itertools.product(nl, nr, ns, ni, batch_size, lr, seed)
+
+    return [template_zero_free(*dataset.values(), *p) for p in list(grid)]
+
+
 def line_zero_none(dataset):
     return [template_zero_none(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
 def line_zero_full(dataset):
@@ -192,20 +268,6 @@ def line_zero_kary(dataset):
     return [template_zero_kary(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
 def line_zero_free(dataset):
     return [template_zero_free(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
-
-
-def line_marg_none(dataset):
-    return [template_marg_none(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
-def line_marg_full(dataset):
-    return [template_marg_full(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
-def line_marg_rand(dataset):
-    return [template_marg_rand(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
-def line_marg_sort(dataset):
-    return [template_marg_sort(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
-def line_marg_kary(dataset):
-    return [template_marg_kary(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
-def line_marg_free(dataset):
-    return [template_marg_free(*dataset.values(), nl=NL, nr=NR, ns=p, ni=p) for p in LINE_SPN]
 
 
 def line_back_none(dataset):
@@ -232,19 +294,12 @@ GRIDS = {
     'graphspn_naive_deq_d': grid_naive_deq_d,
     'graphspn_naive_deq_h': grid_naive_deq_b,
 
-    'graphspn_zero_none': line_zero_none,
-    'graphspn_zero_full': line_zero_full,
-    'graphspn_zero_rand': line_zero_rand,
-    'graphspn_zero_sort': line_zero_sort,
-    'graphspn_zero_kary': line_zero_kary,
-    'graphspn_zero_free': line_zero_free,
-
-    'graphspn_marg_none': line_marg_none,
-    'graphspn_marg_full': line_marg_full,
-    'graphspn_marg_rand': line_marg_rand,
-    'graphspn_marg_sort': line_marg_sort,
-    'graphspn_marg_kary': line_marg_kary,
-    'graphspn_marg_free': line_marg_free,
+    'graphspn_zero_none': grid_zero_none,
+    'graphspn_zero_full': grid_zero_full,
+    'graphspn_zero_rand': grid_zero_rand,
+    'graphspn_zero_sort': grid_zero_sort,
+    'graphspn_zero_kary': grid_zero_kary,
+    'graphspn_zero_free': grid_zero_free,
 
     'graphspn_back_none': line_back_none,
 

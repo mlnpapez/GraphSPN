@@ -10,6 +10,22 @@ from utils import *
 from tqdm import tqdm
 
 
+def marginalize(network, nd_nodes, num_empty, num_full):
+    with torch.no_grad():
+        if num_empty > 0:
+            mx = torch.zeros(nd_nodes,           dtype=torch.bool)
+            ma = torch.zeros(nd_nodes, nd_nodes, dtype=torch.bool)
+            mx[num_full:   ] = True
+            ma[num_full:, :] = True
+            ma[:, num_full:] = True
+            m = torch.cat((mx.unsqueeze(1), ma), dim=1)
+            marginalization_idx = torch.arange(nd_nodes+nd_nodes**2)[m.view(-1)]
+
+            network.set_marginalization_idx(marginalization_idx)
+        else:
+            network.set_marginalization_idx(None)
+
+
 class GraphSPNMargCore(nn.Module):
     def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, atom_list, device='cuda'):
         super().__init__()

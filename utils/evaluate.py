@@ -1,6 +1,7 @@
+import torch
+
 from rdkit import Chem
 from utils.molecular import mols2gs, gs2mols, correct, getvalid
-
 
 
 def get_vmols(x, a, atom_list, correct_mols=False, canonical=True):
@@ -82,17 +83,24 @@ def best_model(path):
     return df.loc[idx]['file_path'], df.loc[idx]['nll_val_approx']
 
 
-def resample_invalid_mols(model, num_samples, atom_list, max_atoms, canonical=True):
+def resample_invalid_mols(model, num_samples, atom_list, max_atoms, canonical=True, max_attempts=10):
     n = num_samples
     mols = []
 
-    while len(mols) != num_samples:
+    for _ in range(max_attempts):
         x, a = model.sample(n)
         valid = [getvalid(mol, canonical) for mol in gs2mols(x, a, atom_list)]
         mols.extend([mol for mol in valid if mol is not None])
         n = num_samples - len(mols)
+        if len(mols) == num_samples:
+            break
 
-    return mols2gs(mols, max_atoms, atom_list)
+    x_valid, a_valid = mols2gs(mols, max_atoms, atom_list)
+    if n > 0:
+        x_maybe, a_maybe = model.sample(n)
+        return torch.cat((x_valid, x_maybe)), torch.cat((a_valid, a_maybe))
+    else:
+        return x_valid, a_valid
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)

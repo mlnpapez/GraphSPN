@@ -10,6 +10,30 @@ from utils.graphs import flatten_graph, unflatt_graph, permute_graph
 from models.spn_utils import ohe2cat, cat2ohe
 
 
+def permute_graph_per_instance(x, a, nd_nodes, nk_nodes):
+    px = torch.zeros_like(x)
+    pa = torch.zeros_like(a)
+    for i in range(len(x)):
+        num_full = torch.sum(x[i, :] != nk_nodes-1)
+        pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, nd_nodes)))
+        px[i, :] = x[i, pi]
+        pa[i, :, :] = a[i, pi, :]
+        pa[i, :, :] = a[i, :, pi]
+    return px, pa
+
+def permute_graph_per_batch(x, a, nd_nodes, nk_nodes, permutation):
+    px = torch.zeros_like(x)
+    pa = torch.zeros_like(a)
+    permutation = torch.tensor(permutation)
+    for i in range(len(x)):
+        num_full = torch.sum(x[i, :] != nk_nodes-1)
+        pi = torch.cat((permutation[permutation < num_full.cpu()], torch.arange(num_full, nd_nodes)))
+        px[i, :] = x[i, pi]
+        pa[i, :, :] = a[i, pi, :]
+        pa[i, :, :] = a[i, :, pi]
+    return px, pa
+
+
 class GraphSPNZeroCore(nn.Module):
     def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, device='cuda'):
         super().__init__()
@@ -19,6 +43,11 @@ class GraphSPNZeroCore(nn.Module):
         self.nk_edges = nk_e
 
         nd = nd_n + nd_e
+        # The implementation of the Einsum networks does not allow for hybrid
+        # probability distributions in the input layer (e.g., two Categorical
+        # distributions with different number of categories). Therefore, we have
+        # to take the maximum number of categories and then truncate the adjacency
+        # matrix when sampling the bonds (as also mentioned below).
         nk = max(nk_n, nk_e)
 
         graph = Graph.random_binary_trees(nd, nl, nr)
@@ -51,6 +80,9 @@ class GraphSPNZeroCore(nn.Module):
     def sample(self, num_samples):
         z = self.network.sample(num_samples).to(torch.int).cpu()
         x, a = unflatt_graph(z, self.nd_nodes, self.nd_nodes)
+        # We have to truncate the adjacency matrix since the implementation of the
+        # Einsum networks does not allow for two different Categorical distributions
+        # in the input layer (as explained above).
         a[a > 3] = 3
         return cat2ohe(x, a, self.nk_nodes, self.nk_edges)
 
@@ -72,8 +104,7 @@ class GraphSPNZeroFull(GraphSPNZeroCore):
         l = torch.zeros(len(x), device=self.device)
         for pi in tqdm(itertools.permutations(range(self.nd_nodes), self.nd_nodes), leave=False):
             with torch.no_grad():
-                px, pa = permute_graph(x, a, pi)
-                px, pa = ohe2cat(px, pa)
+                px, pa = permute_graph_per_batch(x, a, self.nd_nodes, self.nk_nodes, pi)
             l += (torch.exp(self.network(flatten_graph(px, pa).to(self.device)).squeeze() - torch.log(n)))
         return torch.log(l)
 
@@ -82,28 +113,17 @@ class GraphSPNZeroRand(GraphSPNZeroCore):
     def __init__(self, nd_n, nk_n, nk_e, ns, ni, nl, nr, np, device='cuda'):
         super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, device)
 
-        self.num_perms = np
-        self.permutations = torch.stack([torch.randperm(nd_n) for _ in range(min(np, math.factorial(nd_n)))])
+        self.num_perms = min(np, math.factorial(nd_n))
+        # self.permutations = torch.stack([torch.randperm(nd_n) for _ in range(self.num_perms)])
 
     def _forward(self, x, a):
-        l = torch.zeros(len(x), min(self.num_perms, math.factorial(self.nd_nodes)), device=self.device)
+        l = torch.zeros(len(x), self.num_perms, device=self.device)
         # for i, pi in enumerate(self.permutations):
-        permutations = torch.stack([torch.randperm(self.nd_nodes) for _ in range(self.num_perms)])
-        for i, pi in enumerate(permutations):
+        for i, pi in enumerate(torch.stack([torch.randperm(self.nd_nodes) for _ in range(self.num_perms)])):
             with torch.no_grad():
-                px, pa = permute_graph(x, a, pi)
-                px, pa = ohe2cat(px, pa)
+                px, pa = permute_graph_per_batch(x, a, self.nd_nodes, self.nk_nodes, pi)
             l[:, i] = self.network(flatten_graph(px, pa).to(self.device)).squeeze()
         return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
-
-        # for i in range(len(x)):
-        #     num_full = torch.sum(x[i, :] != self.nk_nodes)
-        #     pi = torch.cat((torch.randperm(num_full), torch.arange(num_full, self.nd_nodes)))
-        #     x[i, :] = x[i, pi]
-        #     a[i, :, :] = a[i, pi, :]
-        #     a[i, :, :] = a[i, :, pi]
-
-        # return self.network(flatten_graph(x, a).to(self.device))
 
 
 class GraphSPNZeroSort(GraphSPNZeroCore):
@@ -141,7 +161,7 @@ class GraphSPNZeroSort(GraphSPNZeroCore):
             #     aa[i, :, :] = aa[i, p, :]
             #     aa[i, :, :] = aa[i, :, p]
 
-            # Best to impose the canonical ordering outside
+            # It is better to impose the canonical ordering before the training.
 
         return self.network(flatten_graph(x, a).to(self.device))
 
@@ -174,15 +194,14 @@ class GraphSPNZerokAry(nn.Module):
         self.to(device)
 
     def forward(self, x, a):
-        n = math.perm(self.nd_nodes, self.arity)
-        l = torch.zeros(len(x), n, device=self.device)
+        x, a = ohe2cat(x, a)
+        num_perms = math.perm(self.nd_nodes, self.arity)
+        l = torch.zeros(len(x), num_perms, device=self.device)
         for i, pi in enumerate(itertools.permutations(range(self.nd_nodes), self.arity)):
             with torch.no_grad():
                 px, pa = permute_graph(x, a, pi)
-                px, pa = ohe2cat(px, pa)
             l[:, i] = self.network(flatten_graph(px, pa).to(self.device)).squeeze()
-
-        return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(n))
+        return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(num_perms))
 
     def logpdf(self, x, a):
         return self(x, a).mean()
@@ -192,9 +211,9 @@ class GraphSPNZerokAry(nn.Module):
         x = torch.randint(0, self.nk_nodes, (num_samples, self.nd_nodes),                dtype=torch.int)
         a = torch.randint(0, self.nk_edges, (num_samples, self.nd_nodes, self.nd_nodes), dtype=torch.int)
 
-        n = math.perm(self.nd_nodes, self.arity)
+        num_perms = math.perm(self.nd_nodes, self.arity)
         sub_graphs = list(itertools.permutations(range(self.nd_nodes), self.arity))
-        sub_graphs = [sub_graphs[i] for i in torch.randint(n, (num_sub_graphs,)).tolist()]
+        sub_graphs = [sub_graphs[i] for i in torch.randint(num_perms, (num_sub_graphs,)).tolist()]
 
         z = self.network.sample(num_sub_graphs*num_samples).to(torch.int).cpu()
         z = z.view(num_sub_graphs, num_samples, self.arity, self.arity+1)

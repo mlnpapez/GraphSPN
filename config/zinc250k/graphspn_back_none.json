@@ -13,7 +13,7 @@
     },
     "optimizer": "adam",
     "optimizer_hyperpars": {
-        "lr": 0.01,
+        "lr": 0.001,
         "betas": [
             0.8,
             0.7

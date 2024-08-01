@@ -27,8 +27,8 @@ if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
     RDLogger.DisableLog('rdApp.*')
 
-    dataset = 'zinc250k'
-    names = ['graphspn_back_none'] # MODELS.keys()
+    dataset = 'qm9'
+    names = ['graphspn_zero_sort'] # MODELS.keys()
 
     for name in names:
         with open(f'config/{dataset}/{name}.json', 'r') as f:
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         if 'sort' in name:
             canonical = True
         else:
-            canonical = True
+            canonical = False
 
         loader_trn, loader_val = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=None, canonical=canonical)
         smiles_trn = [x['s'] for x in loader_trn.dataset]

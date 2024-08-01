@@ -46,7 +46,7 @@ def unsupervised(dataset, name, par_buffer):
     if 'sort' in name:
         canonical = True
     else:
-        canonical = True
+        canonical = False
 
     loader_trn, loader_val = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=None, canonical=canonical)
     smiles_trn = [x['s'] for x in loader_trn.dataset]
@@ -103,13 +103,13 @@ if __name__ == "__main__":
     par_buffer = []
     # all_models = [k for k in MODELS.keys() if k not in ['graphspn_zero_full', 'graphspn_marg_full']]
     all_models = [
-        # 'graphspn_zero_none',
-        # 'graphspn_zero_rand',
-        # 'graphspn_zero_sort',
-        # 'graphspn_zero_kary',
-        # 'graphspn_zero_free',
+        'graphspn_zero_none',
+        'graphspn_zero_sort',
+        'graphspn_zero_rand',
+        'graphspn_zero_kary',
+        'graphspn_zero_free',
         # 'graphspn_back_none',
-        'moflow'
+        # 'moflow'
     ]
     gpu_models = MODELS.keys()
 

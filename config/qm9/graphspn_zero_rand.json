@@ -6,10 +6,10 @@
         "nk_n": 5,
         "nk_e": 4,
         "nl": 2,
-        "nr": 40,
+        "nr": 20,
         "ns": 40,
         "ni": 40,
-        "np": 50,
+        "np": 10,
         "device": "cuda"
     },
     "optimizer": "adam",
@@ -20,7 +20,7 @@
             0.82
         ]
     },
-    "num_epochs": 20,
-    "batch_size": 1000,
+    "num_epochs": 1,
+    "batch_size": 256,
     "seed": 0
 }

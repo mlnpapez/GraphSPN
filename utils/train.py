@@ -4,6 +4,7 @@ import torch.optim as optim
 import pandas as pd
 
 from tqdm import tqdm
+from timeit import default_timer
 from rdkit.Chem.Draw import MolsToGridImage
 
 from utils.evaluate import evaluate_molecules, resample_invalid_mols, count_parameters
@@ -81,7 +82,7 @@ def train(
             metric = metrics[metric_type]
             print(f'epoch {epoch:3d}: ll_trn={-nll_trn:.4f}, ' + metrics_str)
 
-            if metric > best_metric:
+            if metric >= best_metric:
                 best_metric = metric
                 lookahead_counter = num_nonimproving_epochs
                 save_model = True
@@ -122,18 +123,25 @@ def evaluate(
         smiles_trn,
         hyperpars,
         evaluation_dir,
-        num_samples=4000,
+        num_samples=10000,
         compute_nll=True,
         canonical=True
     ):
     model.eval()
 
+    start = default_timer()
     x_sam, a_sam = model.sample(num_samples)
+    time_sam = default_timer() - start
+
+    start = default_timer()
     x_res, a_res = resample_invalid_mols(model, num_samples, hyperpars['atom_list'], hyperpars['max_atoms'], canonical)
+    time_res = default_timer() - start
 
     mols_res_f, _, metrics_res_f = evaluate_molecules(x_sam, a_sam, smiles_trn, hyperpars['atom_list'], correct_mols=False, affix='res_f_', canonical=canonical)
     mols_res_t, _, metrics_res_t = evaluate_molecules(x_res, a_res, smiles_trn, hyperpars['atom_list'], correct_mols=False, affix='res_t_', canonical=canonical)
+    start = default_timer()
     mols_cor_t, _, metrics_cor_t = evaluate_molecules(x_sam, a_sam, smiles_trn, hyperpars['atom_list'], correct_mols=True,  affix='cor_t_', canonical=canonical)
+    time_cor = default_timer() - start
 
     if compute_nll == True:
         nll_trn_approx = run_epoch(model, loader_trn)
@@ -149,7 +157,10 @@ def evaluate(
                **metrics_res_t,
                **metrics_cor_t,
                **metrics_neglogliks,
-               "num_params": count_parameters(model)}
+               "num_params": count_parameters(model),
+               "time_sam": time_sam,
+               "time_res": time_res,
+               "time_cor": time_cor}
 
     dir = evaluation_dir + f'metrics/{hyperpars["dataset"]}/{hyperpars["model"]}/'
     if os.path.isdir(dir) != True:
