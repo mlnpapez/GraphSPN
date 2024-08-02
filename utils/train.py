@@ -123,7 +123,7 @@ def evaluate(
         smiles_trn,
         hyperpars,
         evaluation_dir,
-        num_samples=10000,
+        num_samples=4000,
         compute_nll=True,
         canonical=True
     ):
@@ -157,10 +157,10 @@ def evaluate(
                **metrics_res_t,
                **metrics_cor_t,
                **metrics_neglogliks,
-               "num_params": count_parameters(model),
                "time_sam": time_sam,
                "time_res": time_res,
-               "time_cor": time_cor}
+               "time_cor": time_cor + time_sam,
+               "num_params": count_parameters(model)}
 
     dir = evaluation_dir + f'metrics/{hyperpars["dataset"]}/{hyperpars["model"]}/'
     if os.path.isdir(dir) != True:

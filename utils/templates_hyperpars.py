@@ -6,13 +6,13 @@ from utils.datasets import MOLECULAR_DATASETS
 NUM_EPOCHS = 40
 
 
-def template_naive_cat_a(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_a(dataset, max_atoms, max_types, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_a",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nl_e": nl,
@@ -36,13 +36,13 @@ def template_naive_cat_a(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,      
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_cat_b(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_b(dataset, max_atoms, max_types, atom_list,        nl=2, nr=10, ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_b",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nr_n": nr,
@@ -65,13 +65,13 @@ def template_naive_cat_b(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,      
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_cat_c(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_c(dataset, max_atoms, max_types, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_c",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nl_e": nl,
@@ -95,14 +95,14 @@ def template_naive_cat_c(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,      
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_cat_d(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_d(dataset, max_atoms, max_types, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_d",
     "model_hyperpars": {
         "nc"  : nc,
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nl_e": nl,
@@ -126,13 +126,13 @@ def template_naive_cat_d(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5,      
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_cat_e(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_e(dataset, max_atoms, max_types, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_e",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -152,13 +152,13 @@ def template_naive_cat_e(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,      
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_cat_f(dataset, nd, nk,                     ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_f(dataset, max_atoms, max_types, atom_list,                     ns=10, ni=5,         num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_f",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "ns": ns,
         "ni": ni,
@@ -177,13 +177,13 @@ def template_naive_cat_f(dataset, nd, nk,                     ns=10, ni=5,      
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_cat_g(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_g(dataset, max_atoms, max_types, atom_list,        nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_g",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -203,14 +203,14 @@ def template_naive_cat_g(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5,      
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_cat_h(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
+def template_naive_cat_h(dataset, max_atoms, max_types, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5,                         batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_cat_h",
     "model_hyperpars": {
         "nc"  : nc,
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nl_e": nl,
@@ -234,13 +234,13 @@ def template_naive_cat_h(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5,      
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_deq_a(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_a(dataset, max_atoms, max_types, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_a",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nl_e": nl,
@@ -266,13 +266,13 @@ def template_naive_deq_a(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_deq_b(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.1, num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_b(dataset, max_atoms, max_types, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1, num_pieces=[2], batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_b",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nr_n": nr,
@@ -297,13 +297,13 @@ def template_naive_deq_b(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_deq_c(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_c(dataset, max_atoms, max_types, atom_list,        nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_c",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nl_e": nl,
@@ -329,14 +329,14 @@ def template_naive_deq_c(dataset, nd, nk,        nl=2, nr=10, ns=10, ni=5, dc=0.
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_deq_d(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_d(dataset, max_atoms, max_types, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_d",
     "model_hyperpars": {
         "nc"  : nc,
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nl_e": nl,
@@ -362,14 +362,14 @@ def template_naive_deq_d(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.
     "batch_size": batch_size,
     "seed": seed
 }
-def template_naive_deq_h(dataset, nd, nk, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
+def template_naive_deq_h(dataset, max_atoms, max_types, atom_list, nc=10, nl=2, nr=10, ns=10, ni=5, dc=0.1,                 batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_naive_deq_h",
     "model_hyperpars": {
         "nc"  : nc,
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl_n": nl,
         "nl_e": nl,
@@ -423,13 +423,13 @@ def template_zero_none(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns
     "batch_size": batch_size,
     "seed": seed
 }
-def template_zero_full(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0):
+def template_zero_full(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_full",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -449,13 +449,13 @@ def template_zero_full(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_zero_rand(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0):
+def template_zero_rand(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_rand",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -476,13 +476,13 @@ def template_zero_rand(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, np=20,   batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_zero_sort(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
+def template_zero_sort(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_sort",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -502,13 +502,13 @@ def template_zero_sort(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_zero_kary(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0):
+def template_zero_kary(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_kary",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -529,13 +529,13 @@ def template_zero_kary(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, arity=5, batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_zero_free(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
+def template_zero_free(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_zero_free",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -557,13 +557,13 @@ def template_zero_free(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch
 }
 
 
-def template_marg_none(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
+def template_marg_none(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_none",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -583,13 +583,13 @@ def template_marg_none(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_marg_full(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0):
+def template_marg_full(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=10,   lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_full",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -609,13 +609,13 @@ def template_marg_full(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_marg_rand(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0):
+def template_marg_rand(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5, np=20,   batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_rand",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -636,13 +636,13 @@ def template_marg_rand(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, np=20,   batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_marg_sort(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
+def template_marg_sort(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_sort",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -662,13 +662,13 @@ def template_marg_sort(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_marg_kary(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0):
+def template_marg_kary(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5, arity=5, batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_kary",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,
@@ -689,13 +689,13 @@ def template_marg_kary(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5, arity=5, batch
     "batch_size": batch_size,
     "seed": seed
 }
-def template_marg_free(dataset, nd, nk, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
+def template_marg_free(dataset, max_atoms, max_types, atom_list, nl=2, nr=10, ns=10, ni=5,          batch_size=1000, lr=0.05, seed=0):
     return {
     "dataset": dataset,
     "model": "graphspn_marg_free",
     "model_hyperpars": {
-        "nd_n": nd,
-        "nk_n": nk,
+        "nd_n": max_atoms,
+        "nk_n": max_types,
         "nk_e": 4,
         "nl": nl,
         "nr": nr,

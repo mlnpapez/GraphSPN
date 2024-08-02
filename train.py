@@ -28,7 +28,7 @@ if __name__ == '__main__':
     RDLogger.DisableLog('rdApp.*')
 
     dataset = 'qm9'
-    names = ['graphspn_zero_sort'] # MODELS.keys()
+    names = ['graphspn_zero_none'] # MODELS.keys()
 
     for name in names:
         with open(f'config/{dataset}/{name}.json', 'r') as f:
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         else:
             canonical = False
 
-        loader_trn, loader_val = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=None, canonical=canonical)
+        loader_trn, loader_val = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=[0.8, 0.2], canonical=canonical)
         smiles_trn = [x['s'] for x in loader_trn.dataset]
 
         path = train(model, loader_trn, loader_val, smiles_trn, hyperpars, CHECKPOINT_DIR)

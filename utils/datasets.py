@@ -18,12 +18,12 @@ MOLECULAR_DATASETS = {
         'max_types': 5,
         'atom_list': [6, 7, 8, 9, 0]
     },
-    'zinc250k': {
-        'dataset': 'zinc250k',
-        'max_atoms': 38,
-        'max_types': 10,
-        'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53, 0]
-    }
+    # 'zinc250k': {
+    #     'dataset': 'zinc250k',
+    #     'max_atoms': 38,
+    #     'max_types': 10,
+    #     'atom_list': [6, 7, 8, 9, 15, 16, 17, 35, 53, 0]
+    # }
 }
 
 

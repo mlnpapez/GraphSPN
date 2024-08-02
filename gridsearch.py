@@ -48,7 +48,7 @@ def unsupervised(dataset, name, par_buffer):
     else:
         canonical = False
 
-    loader_trn, loader_val = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=None, canonical=canonical)
+    loader_trn, loader_val = load_dataset(hyperpars['dataset'], hyperpars['batch_size'], split=[0.8, 0.2], canonical=canonical)
     smiles_trn = [x['s'] for x in loader_trn.dataset]
 
     path = train(model, loader_trn, loader_val, smiles_trn, hyperpars, CHECKPOINT_DIR, verbose=True)
@@ -101,13 +101,12 @@ def submit_job(dataset, model, par_buffer, device, max_sub):
 
 if __name__ == "__main__":
     par_buffer = []
-    # all_models = [k for k in MODELS.keys() if k not in ['graphspn_zero_full', 'graphspn_marg_full']]
     all_models = [
-        'graphspn_zero_none',
         'graphspn_zero_sort',
+        'graphspn_zero_none',
         'graphspn_zero_rand',
-        'graphspn_zero_kary',
         'graphspn_zero_free',
+        'graphspn_zero_kary',
         # 'graphspn_back_none',
         # 'moflow'
     ]
