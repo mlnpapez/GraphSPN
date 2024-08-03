@@ -64,15 +64,15 @@ if __name__ == "__main__":
     max_types = MOLECULAR_DATASETS[dataset]['max_types']
 
     # trained model path
-    model_path = "results/training/model_checkpoint/qm9/graphspn_zero_rand/dataset=qm9_model=graphspn_zero_rand_nd_n=9_nk_n=5_nk_e=4_nl=2_nr=80_ns=40_ni=20_np=20_device=cuda_lr=0.05_betas=[0.9, 0.82]_num_epochs=20_batch_size=256_seed=0_max_atoms=9.pt"
+    model_path = "results/linesearch/model_checkpoint/qm9/graphspn_zero_sort/dataset=qm9_model=graphspn_zero_sort_nd_n=9_nk_n=5_nk_e=4_nl=3_nr=80_ns=80_ni=40_device=cuda_lr=0.05_betas=[0.9, 0.82]_num_epochs=40_batch_size=256_seed=1_max_atoms=9.pt"
 
     model = torch.load(model_path)
-    torch.manual_seed(1)
+    torch.manual_seed(2)
 
-    num_samples = 2000
+    num_samples = 1000
     num_to_show = 8  # assuming at least num_to_show/num_samples is valid
     # nice utility for molecule drawings https://www.rcsb.org/chemical-sketch
-    patt_smls = ['C1OCC=C1', 'N1NO1', 'CCCO', 'C1CNC1', 'C1=CC=CC=C1', 'C1CCCC1', 'N1C=CC=C1', 'N1NC1']
+    patt_smls = ['C1OCC=C1', 'N1NO1', 'CCCO', 'C1CNC1', 'C1=CC=CC=C1', 'C1CN1C', 'N1C=CC=C1', 'COC']
     cond_smls = []
 
     for patt in patt_smls:
@@ -82,8 +82,9 @@ if __name__ == "__main__":
         valid_mols = [mol for mol in mols if isvalid(mol)]
 
         # small molecule filtering
-        small_smls = [sml for mol, sml in zip(valid_mols[5:], valid_smls[5:]) if len(mol.GetAtoms())-submol_size<submol_size-1]
-        final_smls = valid_smls[:7] if len(small_smls) < 3 else valid_smls[:5] + [small_smls[0], small_smls[2]]
+        small_smls = [sml for mol, sml in zip(valid_mols[10:], valid_smls[10:]) if len(mol.GetAtoms())-submol_size<submol_size-1]
+        final_smls = valid_smls[:8] if len(small_smls) < 3 else valid_smls[:6] + [small_smls[0], small_smls[2]]
+        print(len(final_smls))
         print(final_smls)
 
         cond_smls.append(final_smls)

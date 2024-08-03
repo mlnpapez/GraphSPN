@@ -76,3 +76,14 @@ To reproduce the results in the paper (Table 1), keep the current settings in `g
 python -m gridsearch_evaluate
 ```
 It will produce Table 1 from the paper (both in the `.pdf` and `.tex` formats).
+
+## 4. Conditional Molecule Generation
+To generate new molecules conditionally on a known molecule, run the following command.
+```
+python -m conditional_sampling
+```
+To impose a known structure of the generated molecules, change `patt_smls` in `conditional_sampling.py`. Similarly, to select a model from which to generate the samples, change `model_path`.
+
+<img src="plots/conditional_generation.png" width="500"/>
+
+*Conditional samples of molecular graphs from the sort variant of GraphSPNs (`graphspn_zero_sort`). The known part of a molecule is highlighted in blue.*

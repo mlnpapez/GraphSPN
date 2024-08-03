@@ -1,4 +1,6 @@
+import os
 import torch
+import pandas as pd
 
 from rdkit import Chem
 from utils.molecular import mols2gs, gs2mols, correct, getvalid

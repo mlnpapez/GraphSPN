@@ -139,7 +139,7 @@ def grid_zero_rand(dataset):
     nr = [10, 40, 80]
     ns = [10, 40, 80]
     ni = [10, 40]
-    np = [100]
+    np = [20]
     batch_size = [256]
     lr = [0.05]
     seed = [0, 1, 2, 3, 4]

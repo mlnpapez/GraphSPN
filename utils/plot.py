@@ -45,7 +45,6 @@ def grid_conditional(smiles_mat, smarts_patts, fname="cond_mols", useSVG=False):
             AllChem.GenerateDepictionMatching2DStructure(mol, patt, acceptFailure=True)
             mols.append(mol)
             hit_at, hit_bond = get_hit(mol, patt)
-            # hit_at, hit_bond = [], []
             hit_ats.append(hit_at)
             hit_bonds.append(hit_bond)
 
@@ -55,23 +54,22 @@ def grid_conditional(smiles_mat, smarts_patts, fname="cond_mols", useSVG=False):
     img = MolsToGridImage(mols, highlightAtomLists=hit_ats, highlightBondLists=hit_bonds, 
                         molsPerRow=molsPerRow, subImgSize=(400,400), drawOptions=dopts, useSVG=useSVG)
     if useSVG:
-         with open(f'{fname}.svg', 'w') as f:
+         with open(f'plots/{fname}.svg', 'w') as f:
             img = img.replace("<rect style='opacity:1.0", "<rect style='opacity: 0")  # for transparent background
             f.write(img)
     else:    
-        img.save(f'{fname}.png')
+        img.save(f'plots/{fname}.png')
 
-def grid_unconditional(model, nrows, ncols, max_atoms, atom_list, useSVG=False):
-    # x, a = model.sample(10*nrows*ncols)
+def grid_unconditional(model, nrows, ncols, max_atoms, atom_list, fname="unco_mols", useSVG=False):
     x, a = resample_invalid_mols(model, nrows*ncols, atom_list, max_atoms)
     vmols, _ = get_vmols(x, a, atom_list, correct_mols=True)
     img = MolsToGridImage(vmols[:nrows*ncols], molsPerRow=ncols, subImgSize=(400, 400), useSVG=useSVG)
     if useSVG:
-         with open('joint_mols.svg', 'w') as f:
+         with open(f'plots/{fname}.svg', 'w') as f:
             img = img.replace("<rect style='opacity:1.0", "<rect style='opacity: 0")  # for transparent background
             f.write(img)
     else:
-        img.save('unco_mols.png')
+        img.save(f'plots/{fname}.png')
 
 if __name__ == "__main__":
     # slist = ['CC1=CC2=C(C=C1)C(=CN2CCN1CCOCC1)C(=O)C1=CC=CC2=C1C=CC=C2',
