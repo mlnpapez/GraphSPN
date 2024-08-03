@@ -8,16 +8,10 @@ from utils.evaluate import count_parameters
 
 from models import graphspn_prel
 from models import graphspn_zero
-# from models import graphspn_marg
-# from models import graphspn_back
-# from models import moflow
 
 MODELS = {
     **graphspn_prel.MODELS,
-    **graphspn_zero.MODELS,
-    # **graphspn_marg.MODELS,
-    # **graphspn_back.MODELS,
-    # 'moflow': moflow.MoFlow
+    **graphspn_zero.MODELS
 }
 
 

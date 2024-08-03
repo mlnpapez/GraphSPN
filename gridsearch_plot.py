@@ -4,38 +4,22 @@ import pandas as pd
 from pylatex import Document, TikZ, NoEscape
 
 LEGENDS = {
-    # 'graphspn_marg_none': 'mnone',
-    # 'graphspn_marg_full': 'mfull',
-    # 'graphspn_marg_rand': 'mrand',
-    # 'graphspn_marg_sort': 'msort',
-    # 'graphspn_marg_kary': 'mkary',
-    # 'graphspn_marg_free': 'mfree',
     'graphspn_zero_none': 'znone',
     'graphspn_zero_full': 'zfull',
     'graphspn_zero_rand': 'zrand',
     'graphspn_zero_sort': 'zsort',
     'graphspn_zero_kary': 'zkary',
     'graphspn_zero_free': 'zfree',
-    # 'graphspn_back_none': 'bnone',
-    # 'moflow': 'moflow',
 }
 
 # https://tikz.dev/pgfplots/reference-markers
 MARKS = {
-    # 'graphspn_marg_none': 'x',
-    # 'graphspn_marg_full': '*',
-    # 'graphspn_marg_rand': 'square',
-    # 'graphspn_marg_sort': 'triangle',
-    # 'graphspn_marg_kary': 'star',
-    # 'graphspn_marg_free': 'asterisk',
     'graphspn_zero_none': '+',
     'graphspn_zero_full': '*',
     'graphspn_zero_rand': 'o',
     'graphspn_zero_sort': 'halfcircle',
     'graphspn_zero_kary': 'diamond',
     'graphspn_zero_free': 'pentagon',
-    # 'graphspn_back_none': 'otimes',
-    # 'moflow': 'oplus',
 }
 
 def nextgrouplot(models, ydata, ylabel, evaluation_dir):

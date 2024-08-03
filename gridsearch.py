@@ -12,16 +12,10 @@ from utils.evaluate import count_parameters
 
 from models import graphspn_prel
 from models import graphspn_zero
-# from models import graphspn_marg
-# from models import graphspn_back
-# from models import moflow
 
 MODELS = {
     **graphspn_prel.MODELS,
-    **graphspn_zero.MODELS,
-    # **graphspn_marg.MODELS,
-    # **graphspn_back.MODELS,
-    # 'moflow': moflow.MoFlow
+    **graphspn_zero.MODELS
     }
 
 
@@ -108,8 +102,6 @@ if __name__ == "__main__":
         'graphspn_zero_rand',
         'graphspn_zero_kary',
         # 'graphspn_zero_free',
-        # 'graphspn_back_none',
-        # 'moflow'
     ]
     gpu_models = MODELS.keys()
 

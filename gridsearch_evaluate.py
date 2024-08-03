@@ -6,12 +6,6 @@ from tqdm import tqdm
 from pylatex import Document, Package, NoEscape
 
 MODEL_NAMES_TABLE = {
-    # 'graphspn_marg_none': 'GraphSPN(mnone)',
-    # 'graphspn_marg_full': 'GraphSPN(mfull)',
-    # 'graphspn_marg_rand': 'GraphSPN(mrand)',
-    # 'graphspn_marg_sort': 'GraphSPN(msort)',
-    # 'graphspn_marg_kary': 'GraphSPN(mkary)',
-    # 'graphspn_marg_free': 'GraphSPN(mfree)',
     'graphspn_zero_none': 'GraphSPN: None',
     'graphspn_zero_full': 'GraphSPN: Full',
     'graphspn_zero_rand': 'GraphSPN: Rand',

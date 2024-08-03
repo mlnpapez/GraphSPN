@@ -19,3 +19,11 @@ train.tex
 
 models/graphspn_marg.py
 models/moflow.py
+models/graphspn_back.py
+
+config/qm9/graphspn_back_none.json
+config/qm9/moflow.json
+
+config/zinc250k/graphspn_back_none.json
+config/zinc250k/graphspn_zero_none.json
+config/zinc250k/moflow.json
