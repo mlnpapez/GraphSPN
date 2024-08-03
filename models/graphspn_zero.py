@@ -114,16 +114,21 @@ class GraphSPNZeroRand(GraphSPNZeroCore):
         super().__init__(nd_n, nk_n, nk_e, ns, ni, nl, nr, device)
 
         self.num_perms = min(np, math.factorial(nd_n))
-        # self.permutations = torch.stack([torch.randperm(nd_n) for _ in range(self.num_perms)])
+        self.permutations = torch.stack([torch.randperm(nd_n) for _ in range(self.num_perms)])
+        self.i_perm = 0
 
     def _forward(self, x, a):
-        l = torch.zeros(len(x), self.num_perms, device=self.device)
-        # for i, pi in enumerate(self.permutations):
-        for i, pi in enumerate(torch.stack([torch.randperm(self.nd_nodes) for _ in range(self.num_perms)])):
-            with torch.no_grad():
-                px, pa = permute_graph_per_batch(x, a, self.nd_nodes, self.nk_nodes, pi)
-            l[:, i] = self.network(flatten_graph(px, pa).to(self.device)).squeeze()
-        return torch.logsumexp(l, dim=1) - torch.log(torch.tensor(self.num_perms))
+        # l = torch.zeros(len(x), self.num_perms, device=self.device)
+        # for i, pi in enumerate(torch.stack([torch.randperm(self.nd_nodes) for _ in range(self.num_perms)])):
+        #     with torch.no_grad():
+        #         px, pa = permute_graph_per_batch(x, a, self.nd_nodes, self.nk_nodes, pi)
+        #     l[:, i] = self.network(flatten_graph(px, pa).to(self.device)).squeeze()
+        with torch.no_grad():
+            px, pa = permute_graph_per_batch(x, a, self.nd_nodes, self.nk_nodes, self.permutations[self.i_perm])
+            self.i_perm += 1
+            if self.i_perm == self.num_perms:
+                self.i_perm = 0
+        return self.network(flatten_graph(px, pa).to(self.device)).squeeze()
 
 
 class GraphSPNZeroSort(GraphSPNZeroCore):

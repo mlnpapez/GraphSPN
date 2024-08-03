@@ -6,12 +6,12 @@ from tqdm import tqdm
 from pylatex import Document, Package, NoEscape
 
 MODEL_NAMES_TABLE = {
-    'graphspn_marg_none': 'GraphSPN(mnone)',
-    'graphspn_marg_full': 'GraphSPN(mfull)',
-    'graphspn_marg_rand': 'GraphSPN(mrand)',
-    'graphspn_marg_sort': 'GraphSPN(msort)',
-    'graphspn_marg_kary': 'GraphSPN(mkary)',
-    'graphspn_marg_free': 'GraphSPN(mfree)',
+    # 'graphspn_marg_none': 'GraphSPN(mnone)',
+    # 'graphspn_marg_full': 'GraphSPN(mfull)',
+    # 'graphspn_marg_rand': 'GraphSPN(mrand)',
+    # 'graphspn_marg_sort': 'GraphSPN(msort)',
+    # 'graphspn_marg_kary': 'GraphSPN(mkary)',
+    # 'graphspn_marg_free': 'GraphSPN(mfree)',
     'graphspn_zero_none': 'GraphSPN: None',
     'graphspn_zero_full': 'GraphSPN: Full',
     'graphspn_zero_rand': 'GraphSPN: Rand',
@@ -100,10 +100,10 @@ def find_best_models(dataset, names_models, evaluation_dir):
         cat_frames = pd.concat(res_frames)
         grp_frames = cat_frames.groupby(list(filter(lambda x: x not in IGNORE, cat_frames.columns)))
         agg_frames = grp_frames.agg({
-            'res_f_score': 'mean',
+            'res_f_valid': 'mean',
             'file_path': 'first'
         })
-        best_frame = grp_frames.get_group(agg_frames['res_f_score'].idxmax())
+        best_frame = grp_frames.get_group(agg_frames['res_f_valid'].idxmax())
 
         data_unsu.loc[i] = [MODEL_NAMES_TABLE[model], 100*best_frame['cor_t_valid'].mean(), 100*best_frame['res_f_valid'].mean(), 100*best_frame['res_f_unique'].mean(), 100*best_frame['res_f_novel'].mean()]
 
@@ -117,8 +117,12 @@ if __name__ == "__main__":
     # bestmodels_dir = 'results/linesearch/'
 
     # models   = [name for name in graphspn.MODELS.keys() if name not in ['graphspn_naive_deq_b', 'graphspn_naive_deq_h']]
-    # models = os.listdir(evaluation_dir)
-    models = ['graphspn_zero_none', 'graphspn_zero_rand', 'graphspn_zero_sort', 'graphspn_zero_kary', 'graphspn_zero_free']
+    models = os.listdir(evaluation_dir)
+    # models = ['graphspn_zero_none',
+    #           'graphspn_zero_rand',
+    #           'graphspn_zero_sort',
+    #           'graphspn_zero_kary',
+    #           'graphspn_zero_free']
 
     baselines = baseline_models_qm9()
     

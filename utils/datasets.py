@@ -121,19 +121,21 @@ def load_dataset(name, batch_size, raw=False, seed=0, split=None, dir='data/', c
 
 
 if __name__ == '__main__':
-    download = False
-    dataset = 'zinc250k'
-    canonical = False
+    download = True
+    dataset = 'qm9'
 
     if download:
         if dataset == 'qm9':
-            download_qm9(canonical=canonical)
+            download_qm9(canonical=True)
+            download_qm9(canonical=False)
         elif dataset == 'zinc250k':
-            download_zinc250k(canonical=canonical)
+            download_zinc250k(canonical=True)
+            download_zinc250k(canonical=False)
         else:
             os.error('Unsupported dataset.')
 
-    loader_trn, loader_val = load_dataset(dataset, 100, split=[0.8, 0.2], canonical=canonical)
+    loader_trn, loader_val = load_dataset(dataset, 100, split=[0.8, 0.2], canonical=True)
+    loader_trn, loader_val = load_dataset(dataset, 100, split=[0.8, 0.2], canonical=False)
 
     x = [e['x'] for e in loader_trn.dataset]
     a = [e['a'] for e in loader_trn.dataset]

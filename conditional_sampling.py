@@ -1,15 +1,31 @@
 import torch
 from utils.datasets import MOLECULAR_DATASETS
 from utils.molecular import isvalid, mol2g, gs2mols
-from utils.plot import highlight_grid, joint_grid, marginalize
+from utils.plot import highlight_grid, joint_grid
 from utils.graphs import flatten_graph, unflatt_graph
+
+
+def marginalize(network, nd_nodes, num_empty, num_full):
+    with torch.no_grad():
+        if num_empty > 0:
+            mx = torch.zeros(nd_nodes,           dtype=torch.bool)
+            ma = torch.zeros(nd_nodes, nd_nodes, dtype=torch.bool)
+            mx[num_full:   ] = True
+            ma[num_full:, :] = True
+            ma[:, num_full:] = True
+            m = torch.cat((mx.unsqueeze(1), ma), dim=1)
+            marginalization_idx = torch.arange(nd_nodes+nd_nodes**2)[m.view(-1)]
+
+            network.set_marginalization_idx(marginalization_idx)
+        else:
+            network.set_marginalization_idx(None)
 
 
 from rdkit import Chem, rdBase
 rdBase.DisableLog("rdApp.error")
 
 def conditional_sample(model, xx, aa, submol_size, num_samples):
-    """Conditionaly genera a molecule given some other (smaller) molecule.
+    """Conditionaly generate a molecule given some other (smaller) molecule.
     Parameters:
         model: GraphSPN model
         xx (torch.Tensor): feature tensor [1, max_size]
@@ -37,13 +53,13 @@ def conditional_sample(model, xx, aa, submol_size, num_samples):
 def create_observed_mol(smile='C1OCC=C1', dataset_name='qm9'):
     dataset_info = MOLECULAR_DATASETS[dataset_name]
     mol = Chem.MolFromSmiles(smile)
-    xx, aa = mol2g(mol, dataset_info['nd'], dataset_info['atom_list'])
+    xx, aa = mol2g(mol, dataset_info['max_atoms'], dataset_info['atom_list'])
     mol_size = len(mol.GetAtoms())  # number of atoms in molecule
     return xx.unsqueeze(0), aa.unsqueeze(0), mol_size
 
 if __name__ == "__main__":
     # trained model path
-    model_path = "results/training/model_checkpoint/qm9/graphspn_zero_sort/dataset=qm9_model=graphspn_zero_sort_nd_n=9_nk_n=5_nk_e=4_nl=2_nr=40_ns=40_ni=40_device=cuda_optimizer=adam_lr=0.05_betas=[0.9, 0.82]_num_epochs=20_batch_size=1000_seed=0.pt"
+    model_path = "results/training/model_checkpoint/qm9/graphspn_zero_rand/dataset=qm9_model=graphspn_zero_rand_nd_n=9_nk_n=5_nk_e=4_nl=2_nr=80_ns=40_ni=20_np=20_device=cuda_lr=0.05_betas=[0.9, 0.82]_num_epochs=20_batch_size=256_seed=0_max_atoms=9.pt"
 
     model = torch.load(model_path)
     torch.manual_seed(1)

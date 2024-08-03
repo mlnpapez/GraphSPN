@@ -2,7 +2,6 @@ import os
 import time
 import json
 import torch
-import utils
 import subprocess
 import gridsearch_hyperpars
 
@@ -13,15 +12,17 @@ from utils.evaluate import count_parameters
 
 from models import graphspn_prel
 from models import graphspn_zero
-from models import graphspn_marg
-from models import graphspn_back
-from models import moflow
+# from models import graphspn_marg
+# from models import graphspn_back
+# from models import moflow
 
-MODELS = {**graphspn_prel.MODELS,
-          **graphspn_zero.MODELS,
-          **graphspn_marg.MODELS,
-          **graphspn_back.MODELS,
-          'moflow': moflow.MoFlow,}
+MODELS = {
+    **graphspn_prel.MODELS,
+    **graphspn_zero.MODELS,
+    # **graphspn_marg.MODELS,
+    # **graphspn_back.MODELS,
+    # 'moflow': moflow.MoFlow
+    }
 
 
 CHECKPOINT_DIR = 'results/linesearch/model_checkpoint/'
@@ -102,11 +103,11 @@ def submit_job(dataset, model, par_buffer, device, max_sub):
 if __name__ == "__main__":
     par_buffer = []
     all_models = [
-        'graphspn_zero_sort',
-        'graphspn_zero_none',
+        # 'graphspn_zero_sort',
+        # 'graphspn_zero_none',
         'graphspn_zero_rand',
-        'graphspn_zero_free',
         'graphspn_zero_kary',
+        # 'graphspn_zero_free',
         # 'graphspn_back_none',
         # 'moflow'
     ]
@@ -118,7 +119,7 @@ if __name__ == "__main__":
             print(model)
             if model in gpu_models:
                 device = 'cuda'
-                max_sub = 14
+                max_sub = 20
                 max_jobs_to_submit = 1
             else:
                 device = 'cpu'

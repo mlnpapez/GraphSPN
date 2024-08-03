@@ -13,3 +13,9 @@ qm9.tab
 
 train.pdf
 train.tex
+
+
+
+
+models/graphspn_marg.py
+models/moflow.py

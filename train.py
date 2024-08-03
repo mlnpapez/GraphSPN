@@ -8,15 +8,17 @@ from utils.evaluate import count_parameters
 
 from models import graphspn_prel
 from models import graphspn_zero
-from models import graphspn_marg
-from models import graphspn_back
-from models import moflow
+# from models import graphspn_marg
+# from models import graphspn_back
+# from models import moflow
 
-MODELS = {**graphspn_prel.MODELS,
-          **graphspn_zero.MODELS,
-          **graphspn_marg.MODELS,
-          **graphspn_back.MODELS,
-          'moflow': moflow.MoFlow,}
+MODELS = {
+    **graphspn_prel.MODELS,
+    **graphspn_zero.MODELS,
+    # **graphspn_marg.MODELS,
+    # **graphspn_back.MODELS,
+    # 'moflow': moflow.MoFlow
+}
 
 
 CHECKPOINT_DIR = 'results/training/model_checkpoint/'
@@ -28,7 +30,16 @@ if __name__ == '__main__':
     RDLogger.DisableLog('rdApp.*')
 
     dataset = 'qm9'
-    names = ['graphspn_zero_none'] # MODELS.keys()
+    names = [
+        # 'graphspn_zero_sort',
+        # 'graphspn_zero_none',
+        'graphspn_zero_rand',
+        # 'graphspn_zero_free',
+        # 'graphspn_zero_kary',
+        # 'graphspn_back_none',
+        # 'moflow'
+    ]
+    # names = MODELS.keys()
 
     for name in names:
         with open(f'config/{dataset}/{name}.json', 'r') as f:
