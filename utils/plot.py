@@ -1,7 +1,7 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.Draw import MolsToGridImage, rdMolDraw2D
-from utils.molecular import isvalid
+from utils.evaluate import get_vmols, resample_invalid_mols
 
 
 def get_hit(mol, patt):
@@ -23,7 +23,7 @@ def get_hit(mol, patt):
 
     return hit_ats, hit_bonds
 
-def highlight_grid(smiles_mat, smarts_patts, fname="cond_mols", useSVG=False):
+def grid_conditional(smiles_mat, smarts_patts, fname="cond_mols", useSVG=False):
     """Function plots aligned grid of molecules with highlited patterns.
     Parameters:
         mol (list[list[str]]): SMILE molecule to plot
@@ -61,16 +61,17 @@ def highlight_grid(smiles_mat, smarts_patts, fname="cond_mols", useSVG=False):
     else:    
         img.save(f'{fname}.png')
 
-def joint_grid(model, nrows, ncols, useSVG=False):
-    mols, smls = model.sample(10*nrows*ncols)
-    valid_mols = [mol for mol in mols if isvalid(mol)]
-    img = MolsToGridImage(valid_mols[:nrows*ncols], molsPerRow=ncols, subImgSize=(400, 400), useSVG=useSVG)
+def grid_unconditional(model, nrows, ncols, max_atoms, atom_list, useSVG=False):
+    # x, a = model.sample(10*nrows*ncols)
+    x, a = resample_invalid_mols(model, nrows*ncols, atom_list, max_atoms)
+    vmols, _ = get_vmols(x, a, atom_list, correct_mols=True)
+    img = MolsToGridImage(vmols[:nrows*ncols], molsPerRow=ncols, subImgSize=(400, 400), useSVG=useSVG)
     if useSVG:
          with open('joint_mols.svg', 'w') as f:
             img = img.replace("<rect style='opacity:1.0", "<rect style='opacity: 0")  # for transparent background
             f.write(img)
-    else:    
-        img.save('joint_mols.png')
+    else:
+        img.save('unco_mols.png')
 
 if __name__ == "__main__":
     # slist = ['CC1=CC2=C(C=C1)C(=CN2CCN1CCOCC1)C(=O)C1=CC=CC2=C1C=CC=C2',
@@ -82,10 +83,9 @@ if __name__ == "__main__":
     # smile_mols = [slist, slist]
     # smart_patts = ['c1c2ccccc2ccc1', 'C=O']
 
-    # highlight_grid(smile_mols, smart_patts)
+    # grid_conditional(smile_mols, smart_patts)
 
     slist = ['OCCC1C2=CC[O+]1C2', 'OC1=CNC2=C1COC2', 'CC1C2=CC[O+]1C2', 'C1=C2C[O+](C1)C2', 'OC1=NOC2=C1COC2']
     smls = [slist]
     patts_smls = ['C1OCC=C1']
-    highlight_grid(smls, patts_smls)
-
+    grid_conditional(smls, patts_smls)
