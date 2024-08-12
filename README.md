@@ -65,11 +65,11 @@ The resulting models will be stored in `results/training/model_checkpoint/`, and
 *Unconditional samples of molecular graphs from the sort variant of GraphSPNs (`graphspn_zero_sort`).*
 
 ## 4. Gridsearch
-`gridsearch_hyperpars.py` contains hyper-parameter grids to find a suitable architecture for the GraphSPN variants. Change the hyper-parameter grids based on your preferences, and then run the following script.
+`gridsearch_hyperpars.py` contains hyper-parameter grids to find a suitable architecture for the GraphSPN variants. Change the hyper-parameter grids based on your preferences, and then run the following command.
 ```
 nohup python -m gridsearch > gridsearch.log &
 ```
-This command will run in the background, submitting jobs to your SLURM cluster. The resulting models, metrics, and output logs will be stored in `results/gridsearch/model_checkpoint/`, `results/gridsearch/model_evaluation/`, and `results/gridsearch/model_outputlogs/`, respectively.
+This command will run the script in the background, submitting jobs to your SLURM cluster. The resulting models, metrics, and output logs will be stored in `results/gridsearch/model_checkpoint/`, `results/gridsearch/model_evaluation/`, and `results/gridsearch/model_outputlogs/`, respectively.
 
 To reproduce the results in the paper (Table 1), keep the current settings in `gridsearch_hyperpars.py`. Then, after completing all the SLURM jobs, run the following command.
 ```
@@ -78,7 +78,7 @@ python -m gridsearch_evaluate
 It will produce Table 1 from the paper (both in the `.pdf` and `.tex` formats).
 
 ## 4. Conditional Molecule Generation
-To generate new molecules conditionally on a known molecule, run the following command.
+Run the following command to generate new molecules conditionally on a known molecule.
 ```
 python -m conditional_sampling
 ```

@@ -7,6 +7,8 @@ results
 einsum
 cms
 gridsearch.log
+profile_model.py
+trace.json
 
 qm9.pdf
 qm9.tab

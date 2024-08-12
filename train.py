@@ -25,13 +25,11 @@ if __name__ == '__main__':
 
     dataset = 'qm9'
     names = [
-        # 'graphspn_zero_sort',
+        'graphspn_zero_sort',
         # 'graphspn_zero_none',
-        'graphspn_zero_rand',
+        # 'graphspn_zero_rand',
         # 'graphspn_zero_free',
-        # 'graphspn_zero_kary',
-        # 'graphspn_back_none',
-        # 'moflow'
+        # 'graphspn_zero_kary'
     ]
     # names = MODELS.keys()
 
