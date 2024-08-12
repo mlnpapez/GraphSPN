@@ -19,9 +19,9 @@ MODELS = {
     }
 
 
-CHECKPOINT_DIR = 'results/linesearch/model_checkpoint/'
-EVALUATION_DIR = 'results/linesearch/model_evaluation/'
-OUTPUTLOGS_DIR = 'results/linesearch/model_outputlogs/'
+CHECKPOINT_DIR = 'results/gridsearch/model_checkpoint/'
+EVALUATION_DIR = 'results/gridsearch/model_evaluation/'
+OUTPUTLOGS_DIR = 'results/gridsearch/model_outputlogs/'
 
 
 def unsupervised(dataset, name, par_buffer):

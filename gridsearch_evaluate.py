@@ -105,10 +105,10 @@ def find_best_models(dataset, names_models, evaluation_dir):
 
 
 if __name__ == "__main__":
-    # checkpoint_dir = 'results/linesearch/model_checkpoint/'
-    evaluation_dir = 'results/linesearch/model_evaluation/metrics/qm9/'
-    # hyperparam_dir = 'results/linesearch/model_outputlogs/'
-    # bestmodels_dir = 'results/linesearch/'
+    # checkpoint_dir = 'results/gridsearch/model_checkpoint/'
+    evaluation_dir = 'results/gridsearch/model_evaluation/metrics/qm9/'
+    # hyperparam_dir = 'results/gridsearch/model_outputlogs/'
+    # bestmodels_dir = 'results/gridsearch/'
 
     # models   = [name for name in graphspn.MODELS.keys() if name not in ['graphspn_naive_deq_b', 'graphspn_naive_deq_h']]
     models = os.listdir(evaluation_dir)
